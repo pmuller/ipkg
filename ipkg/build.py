@@ -48,6 +48,7 @@ class Formula(object):
     patches = tuple()
     dependencies = tuple()
     homepage = None
+    envvars = None
     """Arguments passed to ``./configure``"""
     configure_args = ('--prefix=%(env_dir)s',)
 
@@ -86,9 +87,8 @@ class Formula(object):
         return report
 
     def run_configure(self):
-        dirs = {k + '_dir': v for k, v in self.env.directories.items()}
-        args = [p % dirs for p in self.configure_args]
-        self.run_command('./configure', args)
+        self.run_command('./configure',
+                         map(self.env.render_arg, self.configure_args))
 
     def __getattr__(self, attr):
         if attr.startswith('run_'):
@@ -193,6 +193,7 @@ class Formula(object):
             'timestamp': time.time(),
             'files': tuple(files),
             'build_prefix': build_dir,
+            'envvars': self.envvars,
         }
 
         filename = '%(name)s-%(version)s-%(revision)s-' \

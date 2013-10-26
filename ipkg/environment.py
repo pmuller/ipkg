@@ -220,9 +220,16 @@ class Environment(object):
         #variables['CXXFLAGS'].insert('-I%s' % directories['include'])
         self.variables = variables
 
+        # Load environment meta data
         meta_path = os.path.join(prefix, '.ipkg.meta')
         self.meta = DictFile(meta_path)
-        if 'packages' not in self.meta:
+        # If packages are already installed,
+        # add their custom environment variables
+        if 'packages' in self.meta:
+            for name, data in self.meta['packages'].items():
+                if 'envvars' in data:
+                    self.__add_package_envvars(data['envvars'])
+        else:
             self.meta['packages'] = {}
 
     def __str__(self):
@@ -381,8 +388,19 @@ class Environment(object):
         self.meta['packages'][package.name] = package.meta
         self.meta.save()
 
+        if hasattr(package, 'envvars'):
+            self.__add_package_envvars(package.envvars)
+
         LOGGER.info('Package %s %s %s installed', package.name,
                     package.version, package.revision)
+
+    def __add_package_envvars(self, envvars):
+        """Load package custom environment variables."""
+        if isinstance(envvars, dict):
+            for name, value in envvars.items():
+                value = self.render_arg(value)
+                LOGGER.debug('Adding variable %s=%s', name, value)
+                self.variables[name] = Variable(name, value)
 
     @property
     def os_release(self):
@@ -431,6 +449,11 @@ class Environment(object):
     @property
     def packages(self):
         return map(InstalledPackage, self.meta['packages'].values())
+
+    def render_arg(self, arg):
+        """Render a string, replacing environment directories path."""
+        dirs = {k + '_dir': v for k, v in self.directories.items()}
+        return arg % dirs
 
 
 class CannotCreateDirectory(IpkgException):

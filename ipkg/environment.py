@@ -205,7 +205,7 @@ class Environment(object):
         variables['TMPDIR'] = Variable('TMPDIR', directories['tmp'])
         variables['HOME'] = Variable('HOME', os.environ.get('HOME', '/'))
         variables['PS1'] = Variable('PS1',
-                                    '(%s)\h:\w ' % os.path.split(self.prefix)[1])
+                                    '(%s)\h:\w\$ ' % os.path.split(self.prefix)[1])
         variables['PATH'].insert(directories['bin'])
         variables['PATH'].insert(directories['sbin'])
         variables['C_INCLUDE_PATH'].insert(directories['include'])

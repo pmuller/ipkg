@@ -5,10 +5,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='ipkg',
-    version='0.7.0',
+    version='0.8.0',
     description='Simple package management',
     author='Philippe Muller',
-    url='http://ipkg.io',
+    url='http://ipkg.org',
     packages=find_packages(),
     install_requires=('requests>=2.0.0',),
     entry_points="""

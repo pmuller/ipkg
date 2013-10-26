@@ -60,7 +60,9 @@ class Formula(object):
         self.__command_id = 0
         self.__cwd = os.getcwd()
 
-    def run_command(self, command, args, data=None, cwd=None):
+    def run_command(self, command, args=None, data=None, cwd=None):
+        args = args or tuple()
+        LOGGER.info('Running: %s %s', command, ' '.join(args))
 
         if self.verbose:
             stdout = sys.stdout

@@ -281,14 +281,6 @@ class Environment(object):
     def __repr__(self):
         return 'Environment("%s")' % self.prefix
 
-    def get_package_meta_file(self, package):
-        if isinstance(package, BasePackage):
-            package = package.name
-        return os.path.join(self.directories['ipkg_packages'], package)
-
-    def get_package_meta(self, package):
-        return json.loads(open(self.get_package_meta_file(package)).read())
-
     def uninstall(self, package):
         """Uninstall a package.
         """

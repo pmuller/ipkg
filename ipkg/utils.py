@@ -135,17 +135,20 @@ def is_package_like(obj):
 
 
 def make_package_spec(obj):
+
     if is_package_like(obj):
         return '%s==%s:%s' % (obj.name, obj.version, obj.revision)
+
     elif isinstance(obj, dict):
-        spec = name
-        if obj.get('version') is not None:
-            spec += '==' + obj['version']
-            if obj.get('revision') is not None:
-                spec += ':' + obj['revision']
-        return spec
-    else:
-        raise InvalidPackage(obj)
+        if 'name' in obj:
+            spec = obj['name']
+            if obj.get('version') is not None:
+                spec += '==' + obj['version']
+                if obj.get('revision') is not None:
+                    spec += ':%s' % obj['revision']
+            return spec
+
+    raise InvalidPackage(obj)
 
 
 def parse_package_spec(spec):

@@ -9,6 +9,7 @@ from pkg_resources import parse_version
 from .packages import PackageFile
 from .exceptions import IpkgException
 from .vfiles import vopen
+from .utils import DictFile
 
 
 LOGGER = logging.getLogger(__name__)
@@ -36,20 +37,10 @@ class Repository(object):
     def __init__(self, base):
         self.__meta = None
         self.base = base
+        self.meta = DictFile(os.path.join(base, self.META_FILE_NAME))
 
     def __repr__(self):
         return 'Repository(%r)' % self.base
-
-    def get(self, path):
-        full_path = os.path.join(self.base, path)
-        return vopen(full_path)
-
-    @property
-    def meta(self):
-        if self.__meta == None:
-            raw = self.get(self.META_FILE_NAME).read()
-            self.__meta = json.loads(raw)
-        return self.__meta
 
     def find(self, spec, os_name, os_release, arch):
         meta = self.meta
@@ -103,42 +94,66 @@ class Repository(object):
 
 
 class LocalRepository(Repository):
-
+    """A Repository stored on the local filesystem.
+    """
     def update_metadata(self):
         """Update the repository meta data file."""
-        LOGGER.debug('Updating repository metadata')
-        meta = {}
-        package_names = os.listdir(self.base)
+        LOGGER.info('Updating metadata of %r', self)
+        meta = self.meta
+        meta.clear()
+        names = os.listdir(self.base)
 
-        for package_name in package_names:
-            if package_name == self.META_FILE_NAME:
-                continue
+        if names:
+            LOGGER.debug('Repository package names: %s', ' '.join(names))
 
-            meta_package = {}
-            meta[package_name] = meta_package
-            package_path = os.path.join(self.base, package_name)
-            package_files = os.listdir(package_path)
-            #LOGGER.debug('package files: %r', package_files)
+            for name in names:
+                if name == self.META_FILE_NAME:
+                    # Ignore the meta data file at repository root
+                    continue
 
-            for package_file in package_files:
-                filepath = os.path.join(package_path, package_file)
-                package = PackageFile(filepath)
-                version = package.version
-                revision = package.revision
-                #LOGGER.debug('package: %r', package)
+                if name not in meta:
+                    meta[name] = {}
 
-                if version not in meta_package:
-                    meta_package[version] = {}
+                package_dir = os.path.join(self.base, name)
 
-                hashobj = hashlib.sha256()
-                hashobj.update(open(filepath).read())
-                checksum = hashobj.hexdigest()
+                if not os.path.isdir(package_dir):
+                    LOGGER.debug('Ignoring, because it is not '
+                                 'a directory: %s', name)
+                    continue
 
-                meta_revision = {'checksum': checksum}
-                meta_package[version][revision] = meta_revision
+                files = os.listdir(package_dir)
 
-        LOGGER.debug('meta: %r', meta)
-        with open(os.path.join(self.base, self.META_FILE_NAME), 'w') as f:
-            f.write(json.dumps(meta, indent=4))
+                for filename in files:
+                    filepath = os.path.join(package_dir, filename)
+
+                    if not os.path.isfile(filepath):
+                        LOGGER.debug('Ignoring, because it is not a file: %s',
+                                     filepath)
+                        continue
+
+                    package = PackageFile(filepath)
+                    version = package.version
+                    revision = package.revision
+
+                    if version not in meta[name]:
+                        meta[name][version] = {}
+
+                    LOGGER.debug('Adding %s to repository', package)
+
+                    hashobj = hashlib.sha256()
+                    with open(filepath) as f:
+                        hashobj.update(f.read())
+                    checksum = hashobj.hexdigest()
+
+                    meta[name][version][revision] = {'checksum': checksum}
+
+                # Remove package name if no version was added
+                if not meta[name].keys():
+                    meta.pop(name)
+
+        elif not names or not meta.keys():
+            LOGGER.warning('No package found')
+
+        meta.save()
 
         LOGGER.info('Repository meta data updated')

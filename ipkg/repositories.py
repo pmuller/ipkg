@@ -14,6 +14,23 @@ from .utils import DictFile, parse_package_spec
 
 LOGGER = logging.getLogger(__name__)
 
+PACKAGE_FILE_RE = re.compile(r"""
+^
+(?P<name>[A-Za-z0-9_\-]+)
+-
+(?P<version>[0-9a-zA-Z\.\-_]+)
+-
+(?P<revision>\w+)
+-
+(?P<os_name>\w+)
+-
+(?P<os_release>[\.\w]+)
+-
+(?P<arch>[_\w]+)
+\.ipkg
+$
+""", re.X)
+
 
 class PackageRepository(object):
 
@@ -70,6 +87,18 @@ class PackageRepository(object):
         revision = revisions[-1]
 
         return version, revision
+
+    def __iter__(self):
+        packages = []
+        for name in self.meta:
+            name_dir = os.path.join(self.base, name)
+            if not os.path.isdir(name_dir):
+                continue
+            for package_file in os.listdir(name_dir):
+                if PACKAGE_FILE_RE.match(package_file):
+                    package_filepath = os.path.join(name_dir, package_file)
+                    packages.append(PackageFile(package_filepath))
+        return iter(packages)
 
 
 class LocalPackageRepository(PackageRepository):

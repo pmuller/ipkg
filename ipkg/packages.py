@@ -91,7 +91,10 @@ class PackageFile(BasePackage):
         self.__spec = package_spec
         vfile = vopen(package_spec)
         self.__file = tarfile.open(fileobj=vfile)
+        # WARNING : This is slow on big packages !
+        #LOGGER.debug('%r: Extracting meta file', self)
         meta_string = self.__file.extractfile(META_FILE).read()
+        #LOGGER.debug('%r: Meta file extracted', self)
         self.meta = json.loads(meta_string)
 
     def extract(self, path):

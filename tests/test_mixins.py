@@ -20,6 +20,11 @@ class TestNameVersionRevisionComparable(TestCase):
     def test_eq_package_like(self):
         self.assertTrue(self.obj1 == self.obj1)
 
+    def test_eq_package_like_rev_int(self):
+        self.obj2.version = '1.0'
+        self.obj2.revision = '1'
+        self.assertTrue(self.obj1 == self.obj2)
+
     def test_eq_package_spec_full(self):
         self.assertTrue(self.obj1 == 'foo==1.0:1')
 

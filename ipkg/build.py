@@ -184,7 +184,7 @@ class Formula(object):
         meta = {
             'name': self.name,
             'version': self.version,
-            'revision': self.revision,
+            'revision': str(self.revision),
             'os_name': self.env.os_name,
             'os_release': self.env.os_release,
             'arch': self.env.arch,

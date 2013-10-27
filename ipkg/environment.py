@@ -356,14 +356,16 @@ class Environment(object):
 
         package.extract(self.prefix)
 
-        LOGGER.debug('Rewriting prefix in binaries and scripts')
-        for package_file in package.meta['files']:
-            file_dir, file_name = os.path.split(package_file)
-            if file_dir in ('bin', 'sbin') or file_dir.startswith('lib'):
-                file_path = os.path.join(self.prefix, package_file)
-                if os.path.isfile(file_path) and not os.path.islink(file_path):
-                    rewrite_prefix(package_file, package.meta['build_prefix'],
-                                   self.prefix)
+        isfile, islink = os.path.isfile, os.path.islink
+        build_prefix = package.meta['build_prefix']
+        if build_prefix != self.prefix:
+            LOGGER.debug('Rewriting prefix in binaries and scripts')
+            for pkg_file in package.meta['files']:
+                file_dir, file_name = os.path.split(pkg_file)
+                if file_dir in ('bin', 'sbin') or file_dir.startswith('lib'):
+                    file_path = os.path.join(self.prefix, pkg_file)
+                    if isfile(file_path) and not islink(file_path):
+                        rewrite_prefix(pkg_file, build_prefix, self.prefix)
 
         # Write package meta data in environment
         self.meta['packages'][package.name] = package.meta

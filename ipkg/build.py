@@ -36,8 +36,6 @@ def find_files(base):
     return result
 
 
-
-
 class Formula(object):
     """A recipe used to build a package.
     """

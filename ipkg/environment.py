@@ -324,8 +324,12 @@ class Environment(object):
 
         if isinstance(package, basestring):
             if os.path.exists(package):
+                # If package is a string and exists on the filesystem,
+                # use it
                 package = PackageFile(package)
             else:
+                # If it does not exist, and this environment has a repository,
+                # try to find it using the repository.
                 if repository is None:
                     raise IpkgException('Cannot find package %s' % package)
                 else:
@@ -337,14 +341,18 @@ class Environment(object):
         elif not isinstance(package, BasePackage):
             raise IpkgException('Invalid package: %r' % package)
 
+        # Check if the package is already installed
         for installed_package in self.meta['packages'].values():
             if installed_package['name'] == package.name:
+                # Package already installed
                 if installed_package['version'] == package.version and \
                    installed_package['revision'] == package.revision:
+                    # Same version/revision, just warn
                     LOGGER.warning('Package %(name)s %(version)s %(revision)s'
                                    ' is already installed' % package.meta)
                     return
                 else:
+                    # Different version/revision, uninstall it
                     LOGGER.debug('Another version of %r is installed, '
                                  'uninstalling it first' % package)
                     self.uninstall(package)
@@ -359,6 +367,8 @@ class Environment(object):
 
         package.extract(self.prefix)
 
+        # Rewrite files prefix if this environment prefix is different than
+        # package build prefix.
         isfile, islink = os.path.isfile, os.path.islink
         build_prefix = package.meta['build_prefix']
         if build_prefix != self.prefix:
@@ -374,6 +384,7 @@ class Environment(object):
         self.meta['packages'][package.name] = package.meta
         self.meta.save()
 
+        # Load package custom environment variables
         if hasattr(package, 'envvars'):
             self.__add_package_envvars(package.envvars)
 

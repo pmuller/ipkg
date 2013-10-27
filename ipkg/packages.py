@@ -72,9 +72,9 @@ class BasePackage(object):
 class InstalledPackage(BasePackage):
     """A package which is already installed.
     """
-    def __init__(self, meta=None):
+    def __init__(self, meta):
         super(InstalledPackage, self). __init__()
-        self.meta = meta or {}
+        self.meta = meta
 
     def __repr__(self):
         return 'InstalledPackage(%r)' % self.meta

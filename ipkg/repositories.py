@@ -151,7 +151,7 @@ class LocalRepository(Repository):
                 if not meta[name].keys():
                     meta.pop(name)
 
-        elif not names or not meta.keys():
+        if not names or not meta.keys():
             LOGGER.warning('No package found')
 
         meta.save()

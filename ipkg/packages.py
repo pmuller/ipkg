@@ -8,6 +8,7 @@ from pkg_resources import parse_version
 
 from .vfiles import vopen
 from .exceptions import IpkgException
+from .mixins import NameVersionRevisionComparable
 
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class UnknownMeta(IpkgException):
         return 'Unknown meta data: %s' % self.meta
 
 
-class BasePackage(object):
+class BasePackage(NameVersionRevisionComparable):
     """Base package class.
     """
     def __init__(self):
@@ -38,35 +39,6 @@ class BasePackage(object):
             return self.meta[attr]
         else:
             raise UnknownMeta(attr)
-
-    def __eq__(self, other):
-        if isinstance(other, BasePackage):
-            return self.version == other.version and \
-                   self.revision == other.revision
-        else:
-            return self.name == other
-
-    def __ne__(self, other):
-        return self.version != other.version or \
-               self.revision != other.revision
-
-    def __lt__(self, other):
-        s_version = parse_version(self.version)
-        o_version = parse_version(other.version)
-        return s_version < o_version or \
-               (s_version == o_version and self.revision < other.revision)
-
-    def __gt__(self, other):
-        s_version = parse_version(self.version)
-        o_version = parse_version(other.version)
-        return s_version > o_version or \
-               (s_version == o_version and self.revision > other.revision)
-
-    def __le__(self, other):
-        return self == other or self < other
-
-    def __ge__(self, other):
-        return self == other or self > other
 
 
 class InstalledPackage(BasePackage):

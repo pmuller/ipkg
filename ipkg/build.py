@@ -18,6 +18,7 @@ from . import environment
 from .exceptions import IpkgException
 from .packages import META_FILE
 from .vfiles import vopen
+from .mixins import NameVersionRevisionComparable
 
 
 LOGGER = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ def find_files(base):
     return result
 
 
-class Formula(object):
+class Formula(NameVersionRevisionComparable):
     """A recipe used to build a package.
     """
     name = None

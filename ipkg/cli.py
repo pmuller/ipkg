@@ -230,16 +230,25 @@ def shell(env, shell):
     Argument('--keep-build-dir', '-k', action='store_false', default=True,
              dest='remove_build_dir',
              help="Don't remove the build directory."),
+    Argument('--update-repository', '-u', action='store_true', default=False,
+             help='Add the newly built package to the repository. '
+                  'Only works with local repositories.'),
     Argument('--verbose', '-v', action='store_true', default=False,
              help='Show commands output.'),
     Argument('build_file',
              help='A python module which contains a Formula class'),
 )
-def build(build_file, env, verbose, repository, package_dir, remove_build_dir):
+def build(build_file, env, verbose, repository, package_dir,
+          remove_build_dir, update_repository):
     """Build a package.
     """
     formula = Formula.from_file(build_file)(env, verbose)
-    formula.build(package_dir, remove_build_dir, repository)
+
+    if update_repository:
+        repository = repositories.LocalRepository(repository.base)
+        repository.build_formula(formula, remove_build_dir)
+    else:
+        formula.build(package_dir, remove_build_dir, repository)
 
 
 @ipkg.command(Argument('repository', metavar='PATH',

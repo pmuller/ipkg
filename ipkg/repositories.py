@@ -132,20 +132,8 @@ class LocalRepository(Repository):
                         continue
 
                     package = PackageFile(filepath)
-                    version = package.version
-                    revision = package.revision
-
-                    if version not in meta[name]:
-                        meta[name][version] = {}
-
-                    LOGGER.debug('Adding %s to repository', package)
-
-                    hashobj = hashlib.sha256()
-                    with open(filepath) as f:
-                        hashobj.update(f.read())
-                    checksum = hashobj.hexdigest()
-
-                    meta[name][version][revision] = {'checksum': checksum}
+                    self.__add_package(name, package.version,
+                                       package.revision, filepath)
 
                 # Remove package name if no version was added
                 if not meta[name].keys():
@@ -157,3 +145,38 @@ class LocalRepository(Repository):
         meta.save()
 
         LOGGER.info('Repository meta data updated')
+
+    def build_formula(self, formula, remove_build_dir=True):
+        """Build a formula and add the package to the repository.
+        """
+        package_dir = os.path.join(self.base, formula.name)
+        if not os.path.exists(package_dir):
+            os.mkdir(package_dir)
+        package_file = formula.build(package_dir, remove_build_dir, self)
+        self.__add_package(formula.name, formula.version,
+                           formula.revision, package_file)
+        self.meta.save()
+
+    def __add_package(self, name, version, revision, filepath):
+        """Add a package to the repository.
+        """
+        LOGGER.debug('Adding %s==%s:%s to repository',
+                     name, version, revision)
+        meta = self.meta
+
+        if name not in meta:
+            meta[name] = {}
+        if version not in meta[name]:
+            meta[name][version] = {}
+        
+        hashobj = hashlib.sha256()
+        with open(filepath) as f:
+            hashobj.update(f.read())
+        checksum = hashobj.hexdigest()
+
+        LOGGER.debug('sha256: %s', checksum)
+
+        meta[name][version][revision] = {'checksum': checksum}
+
+        LOGGER.info('Package %s==%s:%s added to repository',
+                    name, version, revision)

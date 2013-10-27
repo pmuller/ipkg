@@ -203,7 +203,6 @@ def execute(env, command, arguments):
 
 
 @ipkg.command(
-    #Argument('--shell', '-s', default='/bin/bash --noprofile --norc',
     Argument('--shell', '-s', default='/bin/bash',
              help='Shell executable (Default: "%(default)s")'),
     Argument('env', metavar='ENV',

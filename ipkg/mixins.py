@@ -1,4 +1,4 @@
-from .utils import is_package_like
+from .utils import is_package_like, parse_package_spec
 
 
 class NameVersionRevisionComparable(object):

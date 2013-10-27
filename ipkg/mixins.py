@@ -1,3 +1,7 @@
+import operator
+
+from pkg_resources import parse_version
+
 from .utils import is_package_like, parse_package_spec
 
 

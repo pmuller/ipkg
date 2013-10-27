@@ -176,6 +176,7 @@ class LocalPackageRepository(PackageRepository):
         self.__add_package(formula.name, formula.version,
                            formula.revision, package_file)
         self.meta.save()
+        return package_file
 
     def __add_package(self, name, version, revision, filepath):
         """Add a package to the repository.

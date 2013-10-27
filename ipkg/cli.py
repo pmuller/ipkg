@@ -36,7 +36,8 @@ class Ipkg(object):
         logger.setLevel(log_level)
         handler = logging.StreamHandler()
         if debug:
-            msg_format = '%(asctime)s.%(msecs)03d:%(levelname)s:%(name)s:%(message)s'
+            msg_format = '%(asctime)s.%(msecs)03d:%(levelname)s:' \
+                         '%(name)s:%(message)s'
             time_format = '%H:%M:%S'
             formatter = logging.Formatter(msg_format, time_format)
             handler.setFormatter(formatter)

@@ -30,7 +30,7 @@ $
 """, re.X)
 
 
-class Repository(object):
+class PackageRepository(object):
 
     META_FILE_NAME = 'repository.json'
 
@@ -40,7 +40,7 @@ class Repository(object):
         self.meta = DictFile(os.path.join(base, self.META_FILE_NAME))
 
     def __repr__(self):
-        return 'Repository(%r)' % self.base
+        return 'PakageRepository(%r)' % self.base
 
     def find(self, spec, os_name, os_release, arch):
         meta = self.meta
@@ -93,7 +93,7 @@ class Repository(object):
         return version, revision
 
 
-class LocalRepository(Repository):
+class LocalPackageRepository(PackageRepository):
     """A Repository stored on the local filesystem.
     """
     def update_metadata(self):

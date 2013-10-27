@@ -150,7 +150,7 @@ def list_packages(env):
              type=environment.Environment,
              help='The environment in which the package will be installed.'),
     Argument('--repository', '-r', metavar='URL',
-             type=repositories.Repository,
+             type=repositories.PackageRepository,
              help='Use a repository to find the package'),
     Argument('package', metavar='PKG'),
 )
@@ -231,7 +231,7 @@ def shell(env, shell):
              help='The environment in which the '
                   'package will be built.'),
     Argument('--repository', '-r', metavar='URL',
-             type=repositories.Repository,
+             type=repositories.PackageRepository,
              help='Use a repository to find the dependencies'),
     Argument('--package-dir', '-p', metavar='DIR', default=os.getcwd(),
              help='Where to store the package. Default: current directory.'),
@@ -253,15 +253,17 @@ def build(build_file, env, verbose, repository, package_dir,
     formula = Formula.from_file(build_file)(env, verbose)
 
     if update_repository:
-        repository = repositories.LocalRepository(repository.base)
+        repository = repositories.LocalPackageRepository(repository.base)
         repository.build_formula(formula, remove_build_dir)
     else:
         formula.build(package_dir, remove_build_dir, repository)
 
 
-@ipkg.command(Argument('repository', metavar='PATH',
-                       type=repositories.LocalRepository,
-                       help='Path of the repository.'))
+@ipkg.command(
+    Argument('repository', metavar='PATH',
+             type=repositories.LocalPackageRepository,
+             help='Path of the repository.'),
+)
 def mkrepo(repository):
     repository.update_metadata()
 

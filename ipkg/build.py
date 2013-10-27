@@ -255,7 +255,9 @@ class Formula(object):
 
     @classmethod
     def from_file(cls, filepath):
-        LOGGER.debug('%s.from_file("%s")', cls.__name__, filepath)
+        """Load a Formula from a file.
+        """
+        #LOGGER.debug('%s.from_file("%s")', cls.__name__, filepath)
 
         globals_ = {'Formula': cls, 'File': File}
         locals_ = {}

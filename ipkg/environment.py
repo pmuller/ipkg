@@ -334,6 +334,9 @@ class Environment(object):
                                               os_release=self.os_release,
                                               arch=self.arch)
 
+        elif not isinstance(package, BasePackage):
+            raise IpkgException('Invalid package: %r' % package)
+
         for installed_package in self.meta['packages'].values():
             if installed_package['name'] == package.name:
                 if installed_package['version'] == package.version and \

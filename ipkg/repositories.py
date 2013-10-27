@@ -9,7 +9,7 @@ from pkg_resources import parse_version
 from .packages import PackageFile
 from .exceptions import IpkgException
 from .vfiles import vopen
-from .utils import DictFile, parse_package_spec
+from .utils import DictFile, parse_package_spec, make_package_spec
 from .build import Formula
 
 
@@ -181,8 +181,8 @@ class LocalPackageRepository(PackageRepository):
     def __add_package(self, name, version, revision, filepath):
         """Add a package to the repository.
         """
-        LOGGER.debug('Adding %s==%s:%s to repository',
-                     name, version, revision)
+        spec = make_package_spec(name, version, revision)
+        LOGGER.debug('Adding %s to repository', spec)
         meta = self.meta
 
         if name not in meta:
@@ -199,8 +199,7 @@ class LocalPackageRepository(PackageRepository):
 
         meta[name][version][revision] = {'checksum': checksum}
 
-        LOGGER.info('Package %s==%s:%s added to repository',
-                    name, version, revision)
+        LOGGER.info('Package %s added to repository', spec)
 
 
 class FormulaRepository(object):

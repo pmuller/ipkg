@@ -9,6 +9,7 @@ from pkg_resources import parse_version
 from .vfiles import vopen
 from .exceptions import IpkgException
 from .mixins import NameVersionRevisionComparable
+from .utils import make_package_spec
 
 
 LOGGER = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ class InstalledPackage(BasePackage):
         return 'InstalledPackage(%r)' % self.meta
 
     def __str__(self):
-        return '%(name)s==%(version)s:%(revision)s' % self.meta
+        return make_package_spec(self.meta)
 
 
 class PackageFile(BasePackage):

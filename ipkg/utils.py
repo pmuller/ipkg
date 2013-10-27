@@ -38,7 +38,7 @@ class ExecutionFailed(IpkgException):
 
 
 class InvalidPackage(IpkgException):
-    """Failed parse a package spec.
+    """Failed parse a package spec or argument is not package like.
     """
     def __init__(self, spec):
         self.spec = spec
@@ -132,6 +132,20 @@ def is_package_like(obj):
     return hasattr(obj, 'name') and \
            hasattr(obj, 'version') and \
            hasattr(obj, 'revision')
+
+
+def make_package_spec(obj):
+    if is_package_like(obj):
+        return '%s==%s:%s' % (obj.name, obj.version, obj.revision)
+    elif isinstance(obj, dict):
+        spec = name
+        if obj.get('version') is not None:
+            spec += '==' + obj['version']
+            if obj.get('revision') is not None:
+                spec += ':' + obj['revision']
+        return spec
+    else:
+        raise InvalidPackage(obj)
 
 
 def parse_package_spec(spec):

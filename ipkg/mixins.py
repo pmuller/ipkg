@@ -20,9 +20,9 @@ class NameVersionRevisionComparable(object):
         elif isinstance(other, basestring):
             spec = parse_package_spec(other)
             if spec['name'] == self.name:
-                if 'version' in spec:
+                if spec.get('version') is not None:
                     if spec['version'] == self.version:
-                        if 'revision' in spec:
+                        if spec.get('revision') is not None:
                             return str(spec['revision']) == str(self.revision)
                         else:
                             # No revision in spec, so it's ok
@@ -58,9 +58,9 @@ class NameVersionRevisionComparable(object):
         if is_package_like(other):
             if self.name == other.name:
                 if self.version == other.version:
-                    return cmp_func(self.version, other.version)
-                else:
                     return cmp_func(self.revision, other.revision)
+                else:
+                    return cmp_func(self.version, other.version)
             else:
                 return False
 
@@ -68,9 +68,9 @@ class NameVersionRevisionComparable(object):
             spec = parse_package_spec(other)
 
             if spec['name'] == self.name:
-                if 'version' in spec:
+                if spec.get('version') is not None:
                     if spec['version'] == self.version:
-                        if 'revision' in spec:
+                        if spec.get('revision') is not None:
                             return cmp_func(self.revision, spec['revision'])
                         else:
                             # Same version as spec and no revision in spec,

@@ -9,25 +9,10 @@ from pkg_resources import parse_version
 from .packages import PackageFile
 from .exceptions import IpkgException
 from .vfiles import vopen
-from .utils import DictFile
+from .utils import DictFile, parse_package_spec
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-PACKAGE_SPEC_RE = re.compile(r"""
-^
-(?P<name>[A-Za-z0-9_\-]+)
-(
-    (?P<operator>==)
-    (?P<version>[0-9a-zA-Z\.\-_]+)
-    (
-        :
-        (?P<revision>\w+)
-    )?
-)?
-$
-""", re.X)
 
 
 class PackageRepository(object):
@@ -44,13 +29,7 @@ class PackageRepository(object):
 
     def find(self, spec, os_name, os_release, arch):
         meta = self.meta
-
-        match = PACKAGE_SPEC_RE.match(spec)
-        if match:
-            spec = match.groupdict()
-        else:
-            raise IpkgException('Invalid package: %s' % spec)
-
+        spec = parse_package_spec(spec)
         name = spec['name']
         version = spec['version']
         revision = spec['revision']

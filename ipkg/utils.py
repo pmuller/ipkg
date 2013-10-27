@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import logging
@@ -10,6 +11,20 @@ from .exceptions import IpkgException
 
 LOGGER = logging.getLogger(__name__)
 
+PACKAGE_SPEC_RE = re.compile(r"""
+^
+(?P<name>[A-Za-z0-9_\-]+)
+(
+    (?P<operator>==)
+    (?P<version>[0-9a-zA-Z\.\-_]+)
+    (
+        :
+        (?P<revision>\w+)
+    )?
+)?
+$
+""", re.X)
+
 
 class ExecutionFailed(IpkgException):
     """A command failed to run.
@@ -20,6 +35,16 @@ class ExecutionFailed(IpkgException):
 
     def __str__(self):
         return 'Cannot execute %s: %s' % (' '.join(self.command), self.reason)
+
+
+class InvalidPackage(IpkgException):
+    """Failed parse a package spec.
+    """
+    def __init__(self, spec):
+        self.spec = spec
+
+    def __str__(self):
+        return 'Invalid package: %s' % self.spec
 
 
 class DictFile(dict):
@@ -107,3 +132,13 @@ def is_package_like(obj):
     return hasattr(obj, 'name') and \
            hasattr(obj, 'version') and \
            hasattr(obj, 'revision')
+
+
+def parse_package_spec(spec):
+    """Parse a package ``spec``.
+    """
+    match = PACKAGE_SPEC_RE.match(spec)
+    if match:
+        return match.groupdict()
+    else:
+        raise InvalidPackage(spec)

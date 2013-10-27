@@ -27,6 +27,16 @@ class BuildError(IpkgException):
     """Raised when a formula fails to build."""
 
 
+class IncompleteFormula(BuildError):
+    """A mandatory attribute is missing.
+    """
+    def __init__(self, attr):
+        self.attr = attr
+
+    def __str__(self):
+        return 'The "%s" attribute is mandatory' % self.attr
+
+
 def find_files(base):
     result = []
     for parent, sub_dirs, files in os.walk(base):
@@ -51,6 +61,12 @@ class Formula(object):
     configure_args = ('--prefix=%(env_dir)s',)
 
     def __init__(self, env=None, verbose=False, log=None):
+
+        # Check for mandatory attributes
+        for attr in ('name', 'version', 'revision', 'sources'):
+            if getattr(self, attr) is None:
+                raise IncompleteFormula(attr)
+
         self.env = env
         self.verbose = verbose
         self.log = log or logging.getLogger(__name__ )

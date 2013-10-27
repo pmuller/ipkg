@@ -153,7 +153,8 @@ class Formula(object):
         # Compare the current environment file list with the previous one
         package_files = set(find_files(env_prefix)) - files_before_install
         # Use the list of new files to create a package
-        self.__create_package(package_files, env_prefix, package_dir)
+        package_file = self.__create_package(package_files,
+                                             env_prefix, package_dir)
 
         # Cleanup
         LOGGER.debug('Removing files installed in build environment')
@@ -171,6 +172,8 @@ class Formula(object):
             shutil.rmtree(build_dir)
 
         LOGGER.info('Build done')
+
+        return package_file
 
     def install(self):
         self.run_configure()
@@ -219,6 +222,8 @@ class Formula(object):
                         pkg_file, recursive=False)
 
         LOGGER.info('Package %s created', filepath)
+
+        return filepath
 
     def unarchive(self, src_file):
         LOGGER.debug('unarchive(%r)', src_file)

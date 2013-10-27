@@ -20,6 +20,13 @@ class DictFile(dict):
             with open(self.__file_path) as f:
                 self.update(json.load(f))
 
+    def clear(self):
+        """Force the dictionary to be empty.
+        """
+        if os.path.isfile(self.__file_path):
+            os.unlink(self.__file_path)
+            super(DictFile, self).clear()
+
     def save(self):
         LOGGER.debug('Writing %s', self.__file_path)
         with open(self.__file_path, 'w') as f:

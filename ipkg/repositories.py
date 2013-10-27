@@ -10,9 +10,21 @@ from .packages import PackageFile
 from .exceptions import IpkgException
 from .vfiles import vopen
 from .utils import DictFile, parse_package_spec
+from .build import Formula
 
 
 LOGGER = logging.getLogger(__name__)
+
+FORMULA_FILE_RE = re.compile(r"""
+^
+(?P<name>[A-Za-z0-9_\-]+)
+-
+(?P<version>[0-9a-zA-Z\.\-_]+)
+-
+(?P<revision>\w+)
+\.py
+$
+""", re.X)
 
 PACKAGE_FILE_RE = re.compile(r"""
 ^
@@ -188,3 +200,22 @@ class LocalPackageRepository(PackageRepository):
 
         LOGGER.info('Package %s==%s:%s added to repository',
                     name, version, revision)
+
+
+class FormulaRepository(object):
+    """A Formula repository.
+    """
+    def __init__(self, base):
+        self.base = base
+
+    def __iter__(self):
+        formulas = []
+        for name in os.listdir(self.base):
+            name_dir = os.path.join(self.base, name)
+            if not os.path.isdir(name_dir):
+                continue
+            for formula_file in os.listdir(name_dir):
+                if FORMULA_FILE_RE.match(formula_file):
+                    formula_filepath = os.path.join(name_dir, formula_file)
+                    formulas.append(Formula.from_file(formula_filepath))
+        return iter(formulas)

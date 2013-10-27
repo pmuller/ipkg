@@ -5,8 +5,8 @@ import logging
 from cStringIO import StringIO
 
 from pkg_resources import parse_version
-from .vfiles import vopen
 
+from .vfiles import vopen
 from .exceptions import IpkgException
 
 

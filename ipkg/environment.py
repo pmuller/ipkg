@@ -267,16 +267,23 @@ class Environment(object):
         return process.returncode
 
     def create_directories(self, fail_if_it_exist=True):
-        """Create ipkg environment directories."""
+        """Create ipkg environment directories.
+        """
         LOGGER.debug('Creating environment directories at %s', self.prefix)
         for directory in self.directories.values():
             mkdir(directory, fail_if_it_exist)
         LOGGER.debug('Environment directories %s created', self.prefix)
 
     def mktmpdir(self, prefix=None):
+        """Create a temporary directory.
+
+           It will be stored in the environment ``tmp`` sub-directory.
+        """
         return tempfile.mkdtemp(prefix=prefix, dir=self.directories['tmp'])
 
     def cleanup_tmpdir(self):
+        """Remove then re-create the temporary files directory.
+        """
         tmpdir = self.directories['tmp']
         shutil.rmtree(tmpdir)
         mkdir(tmpdir)

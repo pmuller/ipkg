@@ -32,8 +32,15 @@ class Ipkg(object):
         debug = args.pop('debug')
 
         log_level = logging.DEBUG if debug else logging.INFO
-        logging.basicConfig()
-        logging.getLogger().setLevel(log_level)
+        logger = logging.getLogger('ipkg')
+        logger.setLevel(log_level)
+        handler = logging.StreamHandler()
+        if debug:
+            msg_format = '%(asctime)s.%(msecs)03d:%(levelname)s:%(name)s:%(message)s'
+            time_format = '%H:%M:%S'
+            formatter = logging.Formatter(msg_format, time_format)
+            handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
         try:
             if func.func_name != 'build':

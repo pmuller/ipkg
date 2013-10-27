@@ -132,12 +132,10 @@ class Formula(object):
 
         # Unarchive the sources file and store the sources directory as cwd 
         # for use when running commands from now
-        LOGGER.info('Unarchiving source file: %s', self.sources)
         self.__cwd = self.unarchive(self.sources)
 
         # Apply patches
         if self.patches:
-            LOGGER.info('Applying patches')
             strip = 0
             for patch in self.patches:
                 LOGGER.info('Applying patch: %s', patch)
@@ -244,7 +242,9 @@ class Formula(object):
             raise BuildError('There must be strictly 1 item at '
                              'root of sources file archive')
 
+        LOGGER.info('Extracting: %s', src_file)
         archive.extractall(self.src_root)
+        LOGGER.info('Extracted: %s', src_file)
         archive.close()
 
         return os.path.join(self.src_root, root_items.pop())
@@ -320,3 +320,6 @@ class File(object):
 
     def __repr__(self):
         return 'File("%s")' % self.url
+
+    def __str__(self):
+        return self.url

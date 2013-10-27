@@ -102,6 +102,7 @@ class HttpFile(BaseFile):
     def __get_file(self):
         if self.__file is None:
             try:
+                LOGGER.info('Downloading: %s', self.url)
                 response = requests.get(self.url, stream=True)
 
             except requests.RequestException as exc:
@@ -117,6 +118,7 @@ class HttpFile(BaseFile):
                         break
                 content.seek(0)
                 self.__file = content
+                LOGGER.info('Downloaded: %s', self.url)
 
         return self.__file
 

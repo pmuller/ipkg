@@ -265,10 +265,10 @@ class Environment(object):
 
     def create_directories(self, fail_if_it_exist=True):
         """Create ipkg environment directories."""
-        LOGGER.info('Creating environment directories at %s', self.prefix)
+        LOGGER.debug('Creating environment directories at %s', self.prefix)
         for directory in self.directories.values():
             mkdir(directory, fail_if_it_exist)
-        LOGGER.info('Environment directories %s created', self.prefix)
+        LOGGER.debug('Environment directories %s created', self.prefix)
 
     def mktmpdir(self, prefix=None):
         return tempfile.mkdtemp(prefix=prefix, dir=self.directories['tmp'])

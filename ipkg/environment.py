@@ -216,6 +216,9 @@ class Environment(object):
     def __str__(self):
         return self.variables_string()
 
+    def __repr__(self):
+        return 'Environment("%s")' % self.prefix
+
     def variables_dict(self):
         return {k: v.value for k, v in self.variables.items()}
 
@@ -277,9 +280,6 @@ class Environment(object):
         tmpdir = self.directories['tmp']
         shutil.rmtree(tmpdir)
         mkdir(tmpdir)
-
-    def __repr__(self):
-        return 'Environment("%s")' % self.prefix
 
     def uninstall(self, package):
         """Uninstall a package.

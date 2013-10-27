@@ -98,3 +98,12 @@ def execute(command,
                               'exited with code %i' % process.returncode)
 
     return stdout_str, stderr_str
+
+
+def is_package_like(obj):
+    """Check if ``obj`` has the ``name``, ``version`` and ``revision``
+       attributes.
+    """
+    return hasattr(obj, 'name') and \
+           hasattr(obj, 'version') and \
+           hasattr(obj, 'revision')

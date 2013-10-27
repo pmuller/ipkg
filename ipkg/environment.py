@@ -16,7 +16,7 @@ from collections import OrderedDict
 from .exceptions import IpkgException
 from .packages import BasePackage, InstalledPackage, PackageFile
 from .prefix_rewriters import rewrite_prefix
-from .utils import DictFile
+from .utils import DictFile, execute
 
 
 LOGGER = logging.getLogger(__name__)
@@ -27,17 +27,6 @@ class UnknownEnvironment(IpkgException):
     """
     def __str__(self):
         return self.__doc__.strip()
-
-
-class ExecutionFailed(IpkgException):
-    """A command failed to run.
-    """
-    def __init__(self, command, reason):
-        self.command = command
-        self.reason = reason
-
-    def __str__(self):
-        return 'Cannot execute %s: %s' % (self.command, self.reason)
 
 
 class NotInstalled(IpkgException):
@@ -226,45 +215,13 @@ class Environment(object):
         return '\n'.join('%s%s' % ('export ' if export else '', var)
                          for var in self.variables.values()) + '\n'
 
-    def execute(self, command, arguments=None,
+    def execute(self, command,
                 stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr,
                 cwd=None, data=None):
         """Execute a command in the environment.
         """
-        LOGGER.debug('execute(command="%s", arguments=%s, stdin=%s, '
-                     'stdout=%s, stderr=%s, cwd="%s")' %
-                     (command, arguments,
-                      stdin, stdout, stderr, cwd))
-        arguments = arguments or []
-
-        kw = {'cwd': cwd,
-              'env': self.variables_dict()}
-        if data is None:
-            if stdin:
-                kw['stdin'] = stdin
-        else:
-            kw['stdin'] = subprocess.PIPE
-        if stdout:
-            kw['stdout'] = stdout
-        if stderr:
-            kw['stderr'] = stderr
-
-        try:
-            process = subprocess.Popen([command] + list(arguments), **kw)
-
-        except OSError as exception:
-            if exception.errno == errno.ENOENT:
-                error = 'Command not found'
-            else:
-                error = exception.strerror
-            raise ExecutionFailed(command, error)
-
-        process.communicate(data)
-        process.wait()
-
-        LOGGER.debug('Exited with code: %i', process.returncode)
-
-        return process.returncode
+        env_dict = self.variables_dict()
+        return execute(command, stdin, stdout, stderr, cwd, data, env_dict)
 
     def create_directories(self, fail_if_it_exist=True):
         """Create ipkg environment directories.

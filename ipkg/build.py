@@ -60,9 +60,9 @@ class Formula(object):
         self.__command_id = 0
         self.__cwd = os.getcwd()
 
-    def run_command(self, command, args=None, data=None, cwd=None):
-        args = args or tuple()
-        LOGGER.info('Running: %s %s', command, ' '.join(args))
+    def run_command(self, command, data=None, cwd=None):
+        cmd = command if isinstance(command, basestring) else ' '.join(command)
+        LOGGER.info('Running: %s', cmd)
 
         if self.verbose:
             stdout = sys.stdout
@@ -71,13 +71,12 @@ class Formula(object):
             stdout = stderr = open(os.devnull, 'w')
 
         start = time.time()
-        exit_code = self.env.execute(command, args,
+        exit_code = self.env.execute(command,
                                      stdout=stdout, stderr=stderr,
                                      cwd=cwd or self.__cwd, data=data),
 
         report = {
             'command': command,
-            'args': args,
             'start': start,
             'end': time.time(),
             'exit_code': exit_code,
@@ -89,14 +88,19 @@ class Formula(object):
         return report
 
     def run_configure(self):
-        self.run_command('./configure',
-                         map(self.env.render_arg, self.configure_args))
+        command = ['./configure']
+        command.extend(self.env.render_arg(a) for a in self.configure_args)
+        self.run_command(command)
 
     def __getattr__(self, attr):
         if attr.startswith('run_'):
-            command = attr.split('_', 1)[1]
+            command = [attr.split('_', 1)[1]]
             def func(args=None, **kw):
-                self.run_command(command, args, **kw)
+                if args:
+                    if isinstance(args, basestring):
+                        args = args.split()
+                    command.extend(args)
+                self.run_command(command, **kw)
             return func
         else:
             raise AttributeError(attr)

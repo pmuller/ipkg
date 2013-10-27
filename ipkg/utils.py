@@ -1,11 +1,25 @@
 import os
+import sys
 import json
 import logging
+import subprocess
 
 from .vfiles import vopen
+from .exceptions import IpkgException
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+class ExecutionFailed(IpkgException):
+    """A command failed to run.
+    """
+    def __init__(self, command, reason):
+        self.command = command
+        self.reason = reason
+
+    def __str__(self):
+        return 'Cannot execute %s: %s' % (' '.join(self.command), self.reason)
 
 
 class DictFile(dict):
@@ -33,3 +47,54 @@ class DictFile(dict):
         # This will break if trying to call save() on a remote DictFile
         with open(self.__file_path, 'w') as f:
             json.dump(self, f, indent=4)
+
+
+def execute(command,
+            stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr,
+            cwd=None, data=None, env=None):
+    """Execute a command.
+    """
+    env_str = '{...}' if env else None
+    LOGGER.debug('execute(command=%r, stdin=%s, stdout=%s, stderr=%s, cwd=%r'
+                 ', env=%s)' % (command, stdin, stdout, stderr, cwd, env_str))
+
+    kw = {'cwd': cwd}
+
+    if env:
+        kw['env'] = env
+
+    if stdout:
+        kw['stdout'] = stdout
+
+    if stderr:
+        kw['stderr'] = stderr
+
+    if data is None:
+        if stdin:
+            kw['stdin'] = stdin
+    else:
+        kw['stdin'] = subprocess.PIPE
+
+    # If command is a string, split it to get a format that Popen understands
+    if isinstance(command, basestring):
+        command_ = command.split()
+    else:
+        command_ = command
+
+    try:
+        process = subprocess.Popen(command_, **kw)
+
+    except OSError as exception:
+        if exception.errno == errno.ENOENT:
+            error = 'Command not found'
+        else:
+            error = exception.strerror
+        raise ExecutionFailed(command, error)
+
+    stdout_str, stderr_str = process.communicate(data)
+
+    if process.returncode != 0:
+        raise ExecutionFailed(command,
+                              'exited with code %i' % process.returncode)
+
+    return stdout_str, stderr_str

@@ -1,8 +1,10 @@
 import os
-import subprocess
 import stat
 import re
 import logging
+from subprocess import PIPE
+
+from .utils import execute
 
 
 LOGGER = logging.getLogger(__name__)
@@ -90,10 +92,10 @@ def rewrite_text_first_line(file_path, build_prefix, install_prefix):
 
 def get_osx_bin_libs(file_path):
     otool_cmd = ('otool', '-L', file_path)
-    otool = subprocess.Popen(otool_cmd, stdout=subprocess.PIPE)
-    otool_out = otool.communicate()[0].splitlines()[1:]
+    otool_out = execute(otool_cmd, stdout=PIPE)[0]
+    lines = otool_out.splitlines()[1:]
 
-    return [l[1:].split()[0] for l in otool_out]
+    return [l[1:].split()[0] for l in lines]
 
 
 def rewrite_osx_bin(file_path, build_prefix, install_prefix):
@@ -119,8 +121,7 @@ def rewrite_osx_bin(file_path, build_prefix, install_prefix):
 
     name_tool_cmd.append(file_path)
 
-    name_tool = subprocess.Popen(name_tool_cmd)
-    name_tool.communicate()
+    execute(name_tool_cmd)
 
     if not file_writable:
         os.chmod(file_path, file_stat.st_mode)

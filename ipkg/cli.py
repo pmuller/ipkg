@@ -206,7 +206,9 @@ def printenv(env, export):
 def execute(env, command, arguments):
     """Run a command in an environment.
     """
-    sys.exit(env.execute(command, arguments))
+    command = [command]
+    command.extend(arguments)
+    env.execute(command)
 
 
 @ipkg.command(

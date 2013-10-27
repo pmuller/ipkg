@@ -153,8 +153,8 @@ class Formula(object):
         # Compare the current environment file list with the previous one
         package_files = set(find_files(env_prefix)) - files_before_install
         # Use the list of new files to create a package
-        package_file = self.__create_package(package_files,
-                                             env_prefix, package_dir)
+        ipkg_file = self.__create_package(package_files,
+                                          env_prefix, package_dir)
 
         # Cleanup
         LOGGER.debug('Removing files installed in build environment')
@@ -173,7 +173,7 @@ class Formula(object):
 
         LOGGER.info('Build done')
 
-        return package_file
+        return ipkg_file
 
     def install(self):
         self.run_configure()

@@ -16,7 +16,7 @@ from collections import OrderedDict
 from .exceptions import IpkgException
 from .packages import BasePackage, InstalledPackage, PackageFile
 from .prefix_rewriters import rewrite_prefix
-from .utils import DictFile, execute
+from .utils import DictFile, execute, make_package_spec
 
 
 LOGGER = logging.getLogger(__name__)
@@ -344,8 +344,7 @@ class Environment(object):
         if hasattr(package, 'envvars'):
             self.__add_package_envvars(package.envvars)
 
-        LOGGER.info('Package %s %s %s installed', package.name,
-                    package.version, package.revision)
+        LOGGER.info('Package %s installed', make_package_spec(package))
 
     def __add_package_envvars(self, envvars):
         """Load package custom environment variables."""

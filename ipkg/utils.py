@@ -6,6 +6,7 @@ import logging
 import subprocess
 import tarfile
 import zipfile
+import errno
 
 from .vfiles import vopen
 from .exceptions import IpkgException
@@ -119,7 +120,7 @@ def execute(command,
         if stdin:
             kw['stdin'] = stdin
     else:
-        kw['stdin'] = subprocess.PIPE
+        kw['stdin'] = PIPE
 
     # If command is a string, split it to get a format that Popen understands
     if isinstance(command, basestring):

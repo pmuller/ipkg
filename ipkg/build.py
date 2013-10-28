@@ -13,12 +13,12 @@ from cStringIO import StringIO
 
 import requests
 
-from .environments import mkdir, Environment
+from .environments import Environment
 from .exceptions import IpkgException
 from .packages import META_FILE
 from .files import vopen
 from .mixins import NameVersionRevisionComparable
-from .utils import unarchive
+from .utils import unarchive, mkdir
 
 
 LOGGER = logging.getLogger(__name__)

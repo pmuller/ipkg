@@ -62,6 +62,17 @@ class InvalidDictFileContent(IpkgException):
         return 'Invalid JSON data: %s' % self.filepath
 
 
+class CannotCreateDirectory(IpkgException):
+    """Raised when a directory cannot be created"""
+    def __init__(self, directory, reason):
+        self.directory = directory
+        self.reason = reason
+
+    def __str__(self):
+        return 'Cannot create directory %s: %s' % (self.directory,
+                                                   self.reason)
+
+
 class DictFile(dict):
     """A ``dict``, storable as a JSON file.
     """
@@ -213,3 +224,13 @@ def unarchive(fileobj, target):
     archive.close()
 
     return os.path.join(target, root_items.pop())
+
+
+def mkdir(directory, fail_if_it_exist=True):
+    """Create a directory"""
+    LOGGER.debug('Creating directory %s', directory)
+    try:
+        os.mkdir(directory)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST or fail_if_it_exist:
+            raise CannotCreateDirectory(directory, exception.strerror)

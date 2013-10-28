@@ -16,7 +16,7 @@ from collections import OrderedDict
 from .exceptions import IpkgException
 from .packages import BasePackage, InstalledPackage, PackageFile
 from .prefix_rewriters import rewrite_prefix
-from .utils import DictFile, execute, make_package_spec
+from .utils import DictFile, execute, make_package_spec, mkdir
 
 
 LOGGER = logging.getLogger(__name__)
@@ -71,6 +71,17 @@ class Variable(object):
 
     def __str__(self):
         return "%s='%s'" % (self.name, self.value)
+
+
+def in_env():
+    return 'IPKG_ENVIRONMENT' in os.environ
+
+
+def current():
+    if in_env():
+        return Environment(os.environ['IPKG_ENVIRONMENT'])
+    else:
+        raise UnknownEnvironment()
 
 
 class ListVariable(Variable):
@@ -406,35 +417,3 @@ class Environment(object):
         """Render a string, replacing environment directories path."""
         dirs = {k + '_dir': v for k, v in self.directories.items()}
         return arg % dirs
-
-
-class CannotCreateDirectory(IpkgException):
-    """Raised when a directory cannot be created"""
-    def __init__(self, directory, reason):
-        self.directory = directory
-        self.reason = reason
-
-    def __str__(self):
-        return 'Cannot create directory %s: %s' % (self.directory,
-                                                   self.reason)
-
-
-def mkdir(directory, fail_if_it_exist=True):
-    """Create a directory"""
-    LOGGER.debug('Creating directory %s', directory)
-    try:
-        os.mkdir(directory)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST or fail_if_it_exist:
-            raise CannotCreateDirectory(directory, exception.strerror)
-
-
-def in_env():
-    return 'IPKG_ENVIRONMENT' in os.environ
-
-
-def current():
-    if in_env():
-        return Environment(os.environ['IPKG_ENVIRONMENT'])
-    else:
-        raise UnknownEnvironment()

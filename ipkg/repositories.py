@@ -9,7 +9,7 @@ from pkg_resources import parse_version
 from .packages import PackageFile
 from .exceptions import IpkgException
 from .files import vopen
-from .utils import DictFile, parse_package_spec, make_package_spec
+from .utils import DictFile, parse_package_spec, make_package_spec, mkdir
 from .build import Formula
 
 
@@ -174,7 +174,7 @@ class LocalPackageRepository(PackageRepository):
         """
         package_dir = os.path.join(self.base, formula.name)
         if not os.path.exists(package_dir):
-            os.mkdir(package_dir)
+            mkdir(package_dir)
         package_file = formula.build(package_dir, remove_build_dir, self)
         self.__add_package(formula.name, formula.version,
                            formula.revision, package_file)

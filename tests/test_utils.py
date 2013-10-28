@@ -32,8 +32,7 @@ class TestDictFile(TestCase):
     def test_invalid_content(self):
         with open(self.filepath, 'w') as f:
             f.write('foo')
-        with self.assertRaises(InvalidDictFileContent):
-            DictFile(self.filepath)
+        self.assertRaises(InvalidDictFileContent, DictFile, self.filepath)
 
     def test_clear(self):
         d = {'truth': 42}
@@ -69,12 +68,12 @@ class TestExecute(TestCase):
 #        self.assertEqual(err, '42\n')
 
     def test_exit_code_not_0(self):
-        with self.assertRaises(ExecutionFailed):
-            execute('ls /I-HOPE-THIS-FILE-WILL-NEVER-EXISTS', stderr=PIPE)
+        self.assertRaises(ExecutionFailed,
+            execute, 'ls /I-HOPE-THIS-FILE-WILL-NEVER-EXISTS', stderr=PIPE)
 
     def test_command_not_found(self):
-        with self.assertRaises(ExecutionFailed):
-            execute('I-HOPE-THIS-COMMAND-WILL-NEVER-EXISTS', stderr=PIPE)
+        self.assertRaises(ExecutionFailed,
+            execute, 'I-HOPE-THIS-COMMAND-WILL-NEVER-EXISTS', stderr=PIPE)
 
     def test_with_data(self):
         out = execute('cat', data='42', stdout=PIPE)[0]
@@ -105,9 +104,7 @@ class TestMakePackageSpec(TestCase):
         self.assertEqual(spec, 'foo==1.0')
 
     def test_dict_empty(self):
-        with self.assertRaises(InvalidPackage):
-            make_package_spec({})
+        self.assertRaises(InvalidPackage, make_package_spec, {})
 
     def test_bad_obj_type(self):
-        with self.assertRaises(InvalidPackage):
-            make_package_spec(None)
+        self.assertRaises(InvalidPackage, make_package_spec, None)

@@ -52,7 +52,7 @@ class Ipkg(object):
             if debug:
                 LOGGER.exception(exception)
             else:
-                LOGGER.error(exception)
+                LOGGER.error('Error: %s' % exception)
             raise SystemExit(-1)
 
     def command(self, arg_or_func=None, *args):

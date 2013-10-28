@@ -16,7 +16,7 @@ import requests
 from .environments import mkdir, Environment
 from .exceptions import IpkgException
 from .packages import META_FILE
-from .vfiles import vopen
+from .files import vopen
 from .mixins import NameVersionRevisionComparable
 from .utils import unarchive
 

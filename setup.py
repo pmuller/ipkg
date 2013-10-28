@@ -19,9 +19,9 @@ setup(
         [setuptools.installation]
         eggsecutable = ipkg.cli:ipkg
 
-        [ipkg.vfiles.backend]
-        file=ipkg.vfiles.backends:LocalFile
-        http=ipkg.vfiles.backends:HttpFile
-        https=ipkg.vfiles.backends:HttpFile
+        [ipkg.files.backend]
+        file=ipkg.files.backends:LocalFile
+        http=ipkg.files.backends:HttpFile
+        https=ipkg.files.backends:HttpFile
     """,
 )

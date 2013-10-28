@@ -8,7 +8,7 @@ from pkg_resources import parse_version
 
 from .packages import PackageFile
 from .exceptions import IpkgException
-from .vfiles import vopen
+from .files import vopen
 from .utils import DictFile, parse_package_spec, make_package_spec
 from .build import Formula
 

@@ -8,7 +8,7 @@ import tarfile
 import zipfile
 import errno
 
-from .vfiles import vopen
+from .files import vopen
 from .exceptions import IpkgException
 
 

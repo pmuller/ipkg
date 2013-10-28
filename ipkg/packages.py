@@ -6,7 +6,7 @@ from cStringIO import StringIO
 
 from pkg_resources import parse_version
 
-from .vfiles import vopen
+from .files import vopen
 from .exceptions import IpkgException
 from .mixins import NameVersionRevisionComparable
 from .utils import make_package_spec

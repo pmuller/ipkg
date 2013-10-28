@@ -37,6 +37,9 @@ class BaseFile(object):
         self.expected_hash = expected_hash
         self.hash_class = hash_class
 
+    def __str__(self):
+        return self.name
+
     def verify_checksum(self):
         """Validates a file checksum.
         """

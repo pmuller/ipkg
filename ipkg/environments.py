@@ -56,21 +56,21 @@ class Variable(object):
     """An environment variable with free text value.
     """
     def __init__(self, name, value=None):
-        self.__name = name
+        self.name = name
         self.set(value)
 
     def set(self, value):
         if isinstance(value, basestring):
             self.__value = value
         else:
-            raise InvalidVariableValue(self.__name, value)
+            raise InvalidVariableValue(self.name, value)
 
     @property
     def value(self):
         return self.__value
 
     def __str__(self):
-        return "%s='%s'" % (self.__name, self.value)
+        return "%s='%s'" % (self.name, self.value)
 
 
 class ListVariable(Variable):
@@ -86,7 +86,7 @@ class ListVariable(Variable):
         elif isinstance(value, basestring):
             self.__paths = value.split(self.LIST_SEPARATOR)
         else:
-            raise InvalidVariableValue(name, value)
+            raise InvalidVariableValue(self.name, value)
 
     def remove(self, path):
         if path in self.__paths:

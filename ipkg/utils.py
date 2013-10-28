@@ -157,7 +157,11 @@ def is_package_like(obj):
 
 
 def make_package_spec(obj):
+    """Returns a package specification string,
+       formatted as ``name==version:revision``.
 
+       Accepts package-like objects and dicts.
+    """
     if is_package_like(obj):
         return '%s==%s:%s' % (obj.name, obj.version, obj.revision)
 

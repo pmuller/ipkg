@@ -55,7 +55,7 @@ class InvalidVariableValue(IpkgException):
 class Variable(object):
     """An environment variable with free text value.
     """
-    def __init__(self, name, value=None):
+    def __init__(self, name, value):
         self.__name = name
         self.set(value)
 

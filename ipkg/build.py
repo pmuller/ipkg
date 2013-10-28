@@ -9,7 +9,11 @@ import socket
 #import pwd
 import tarfile
 import json
-from cStringIO import StringIO
+
+try:
+    from cStringIO import StringIO
+except ImportError: # Python 3
+    from io import StringIO
 
 import requests
 

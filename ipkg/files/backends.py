@@ -1,9 +1,17 @@
 """vfiles backend classes handle protocol access to files.
 """
-from urlparse import urlparse
 import logging
 import hashlib
-from cStringIO import StringIO
+
+try:
+    from urlparse import urlparse
+except ImportError: # Python 3
+    from urllib.parse import urlparse
+
+try:
+    from cStringIO import StringIO
+except ImportError: # Python 3
+    from io import StringIO
 
 import requests
 

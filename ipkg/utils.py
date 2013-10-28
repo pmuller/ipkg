@@ -204,8 +204,8 @@ def unarchive(fileobj, target):
         raise IpkgException('Unrecognized file type %s' % fileobj.name)
 
     if len(root_items) != 1:
-        raise BuildError('There must be strictly 1 item at '
-                         'root of sources file archive')
+        raise IpkgException('There must be strictly 1 item at '
+                            'root of sources file archive')
 
     LOGGER.info('Extracting: %s', fileobj)
     archive.extractall(target)

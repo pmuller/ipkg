@@ -220,7 +220,10 @@ class Environment(object):
         return 'Environment("%s")' % self.prefix
 
     def variables_dict(self):
-        return {k: v.value for k, v in self.variables.items()}
+        result = {}
+        for k, v in self.variables.items():
+            result[k] = v.value
+        return result
 
     def variables_string(self, export=False):
         return '\n'.join('%s%s' % ('export ' if export else '', var)

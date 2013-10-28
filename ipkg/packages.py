@@ -2,7 +2,6 @@ import os
 import json
 import tarfile
 import logging
-from cStringIO import StringIO
 
 from pkg_resources import parse_version
 

@@ -63,7 +63,7 @@ class Variable(object):
         if isinstance(value, basestring):
             self.__value = value
         else:
-            raise InvalidVariableValue(name, value)
+            raise InvalidVariableValue(self.__name, value)
 
     @property
     def value(self):

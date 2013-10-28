@@ -84,3 +84,30 @@ class TestExecute(TestCase):
         out = execute(['sh', '-c', 'echo $FOO'],
                       env={'FOO': '42'}, stdout=PIPE)[0]
         self.assertEqual(out, '42\n')
+
+
+class TestMakePackageSpec(TestCase):
+
+    SAMPLE = {'name': 'foo', 'version' : '1.0', 'revision': 1}
+
+    def test_package_like_obj(self):
+        obj = type('foo', (object,), self.SAMPLE)()
+        self.assertEqual(make_package_spec(obj), 'foo==1.0:1')
+
+    def test_dict_full(self):
+        self.assertEqual(make_package_spec(self.SAMPLE), 'foo==1.0:1')
+
+    def test_dict_name_only(self):
+        self.assertEqual(make_package_spec({'name': 'foo'}), 'foo')
+
+    def test_dict_name_version(self):
+        spec = make_package_spec({'name': 'foo', 'version': '1.0'})
+        self.assertEqual(spec, 'foo==1.0')
+
+    def test_dict_empty(self):
+        with self.assertRaises(InvalidPackage):
+            make_package_spec({})
+
+    def test_bad_obj_type(self):
+        with self.assertRaises(InvalidPackage):
+            make_package_spec(None)

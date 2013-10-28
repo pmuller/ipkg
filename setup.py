@@ -24,4 +24,18 @@ setup(
         http=ipkg.files.backends:HttpFile
         https=ipkg.files.backends:HttpFile
     """,
+    classifiers="""
+        Development Status :: 3 - Alpha
+        Environment :: Console
+        Intended Audience :: Developers
+        Intended Audience :: System Administrators
+        License :: OSI Approved :: MIT License
+        Operating System :: MacOS :: MacOS X
+        Operating System :: POSIX :: Linux
+        Programming Language :: Python :: 2.7
+        Topic :: Software Development
+        Topic :: System :: Installation/Setup
+        Topic :: System :: Software Distribution
+        Topic :: Utilities
+    """
 )

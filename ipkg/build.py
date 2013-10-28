@@ -59,7 +59,7 @@ class Formula(NameVersionRevisionComparable):
     homepage = None
     envvars = None
     """Arguments passed to ``./configure``"""
-    configure_args = ('--prefix=%(env_dir)s',)
+    configure_args = ['--prefix=%(env_dir)s']
 
     def __init__(self, env=None, verbose=False, log=None):
 

@@ -181,7 +181,7 @@ class LocalPackageRepository(PackageRepository):
     def __add_package(self, name, version, revision, filepath):
         """Add a package to the repository.
         """
-        spec = make_package_spec(name, version, revision)
+        spec = make_package_spec(vars())
         LOGGER.debug('Adding %s to repository', spec)
         meta = self.meta
 

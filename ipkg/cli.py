@@ -233,7 +233,7 @@ def shell(env, shell):
                   'package will be built.'),
     Argument('--repository', '-r', metavar='URL',
              type=repositories.PackageRepository,
-             help='Use a repository to find the dependencies'),
+             help='Use a repository to find the dependencies.'),
     Argument('--package-dir', '-p', metavar='DIR', default=os.getcwd(),
              help='Where to store the package. Default: current directory.'),
     Argument('--keep-build-dir', '-k', action='store_false', default=True,
@@ -245,7 +245,7 @@ def shell(env, shell):
     Argument('--verbose', '-v', action='store_true', default=False,
              help='Show commands output.'),
     Argument('build_file',
-             help='A python module which contains a Formula class'),
+             help='A python module which contains a Formula class.'),
 )
 def build(build_file, env, verbose, repository, package_dir,
           remove_build_dir, update_repository):

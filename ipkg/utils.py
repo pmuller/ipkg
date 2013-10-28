@@ -49,6 +49,16 @@ class InvalidPackage(IpkgException):
         return 'Invalid package: %s' % self.spec
 
 
+class InvalidDictFileContent(IpkgException):
+    """Raised when a DictFile load data from an invalid meta data file.
+    """
+    def __init__(self, filepath):
+        self.filepath = filepath
+
+    def __str__(self):
+        return 'Invalid JSON data: %s' % self.filepath
+
+
 class DictFile(dict):
     """A ``dict``, storable as a JSON file.
     """
@@ -60,7 +70,14 @@ class DictFile(dict):
     def reload(self):
         if os.path.isfile(self.__file_path):
             LOGGER.debug('Loading %s', self.__file_path)
-            self.update(json.load(vopen(self.__file_path)))
+            raw = vopen(self.__file_path).read()
+            if raw:
+                try:
+                    data = json.loads(raw)
+                except ValueError:
+                    raise InvalidDictFileContent(self.__file_path)
+                else:
+                    self.update(json.loads(raw))
 
     def clear(self):
         """Force the dictionary to be empty.

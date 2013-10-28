@@ -9,6 +9,7 @@ setup(
     description='Simple package management',
     author='Philippe Muller',
     url='http://ipkg.org',
+    license='MIT',
     packages=find_packages(),
     install_requires=('requests>=2.0.0',),
     entry_points="""

@@ -4,7 +4,6 @@ import tempfile
 import shutil
 import logging
 import hashlib
-import tarfile
 import time
 import socket
 #import pwd
@@ -19,6 +18,7 @@ from .exceptions import IpkgException
 from .packages import META_FILE
 from .vfiles import vopen
 from .mixins import NameVersionRevisionComparable
+from .utils import unarchive
 
 
 LOGGER = logging.getLogger(__name__)
@@ -243,30 +243,9 @@ class Formula(NameVersionRevisionComparable):
         return filepath
 
     def unarchive(self, src_file):
-        LOGGER.debug('unarchive(%r)', src_file)
-
-        if src_file.url.endswith('.tar.gz') or \
-           src_file.url.endswith('.tar.bz2'):
-            archive = tarfile.open(fileobj=src_file.open())
-            root_items = set(i.path.split('/')[0] for i in archive)
-        elif src_file.url.endswith('.zip'):
-            archive = zipfile.ZipFile(src_file.open())
-            root_items = set(i.filename.split('/')[0] for i in
-                             archive.filelist)
-        else:
-            LOGGER.error('Cannot unarchive %s', src_file.url)
-            raise NotImplemented
-
-        if len(root_items) != 1:
-            raise BuildError('There must be strictly 1 item at '
-                             'root of sources file archive')
-
-        LOGGER.info('Extracting: %s', src_file)
-        archive.extractall(self.src_root)
-        LOGGER.info('Extracted: %s', src_file)
-        archive.close()
-
-        return os.path.join(self.src_root, root_items.pop())
+        """Unarchive ``src_file``.
+        """
+        return unarchive(src_file.open(), self.src_root)
 
     @classmethod
     def from_file(cls, filepath):
@@ -335,7 +314,7 @@ class File(object):
 
     def open(self):
         f = vopen(self.url, expected_hash=self.expected_hash,
-                        hash_class=self.hash_class)
+                  hash_class=self.hash_class)
         f.verify_checksum()
         return f
 

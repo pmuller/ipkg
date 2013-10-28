@@ -4,6 +4,8 @@ import sys
 import json
 import logging
 import subprocess
+import tarfile
+import zipfile
 
 from .vfiles import vopen
 from .exceptions import IpkgException
@@ -159,3 +161,31 @@ def parse_package_spec(spec):
         return match.groupdict()
     else:
         raise InvalidPackage(spec)
+
+
+def unarchive(fileobj, target):
+    LOGGER.debug('unarchive(%r, %r)', fileobj, target)
+
+    if fileobj.name.endswith('.tar.gz') or \
+       fileobj.name.endswith('.tar.bz2'):
+        archive = tarfile.open(fileobj=fileobj)
+        root_items = set(i.path.split('/')[0] for i in archive)
+
+    elif fileobj.name.endswith('.zip'):
+        archive = zipfile.ZipFile(fileobj)
+        root_items = set(i.filename.split('/')[0] for i in
+                         archive.filelist)
+
+    else:
+        raise IpkgException('Unrecognized file type %s' % fileobj.name)
+
+    if len(root_items) != 1:
+        raise BuildError('There must be strictly 1 item at '
+                         'root of sources file archive')
+
+    LOGGER.info('Extracting: %s', fileobj)
+    archive.extractall(target)
+    LOGGER.info('Extracted: %s', fileobj)
+    archive.close()
+
+    return os.path.join(target, root_items.pop())

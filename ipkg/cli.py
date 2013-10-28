@@ -44,7 +44,7 @@ class Ipkg(object):
         logger.addHandler(handler)
 
         try:
-            if func.func_name != 'build':
+            if func.func_name not in ('build', 'build_repository'):
                 if 'env' in args and args['env'] is None:
                     args['env'] = environment.current()
             func(**args)
@@ -267,6 +267,35 @@ def build(build_file, env, verbose, repository, package_dir,
 )
 def mkrepo(repository):
     repository.update_metadata()
+
+
+@ipkg.command(
+    'build-repository',
+    Argument('--environment', '-e', metavar='ENV', dest='env',
+             type=environment.Environment,
+             help='The environment in which the '
+                  'packages will be built.'),
+    Argument('--verbose', '-v', action='store_true', default=False,
+             help='Show commands output.'),
+    Argument('package_repository',
+             type=repositories.LocalPackageRepository,
+             help='Path of the repository.'),
+    Argument('formula_repository',
+             type=repositories.FormulaRepository,
+             help='Path of the formulas.'),
+)
+def build_repository(env, verbose, package_repository, formula_repository):
+    """Build all formulas and store them in a repository.
+    """
+    new_packages = package_repository.build_formulas(formula_repository,
+                                                     env, verbose)
+    if new_packages:
+        LOGGER.info('New packages:')
+        for package_file in new_packages:
+            filename = os.path.basename(package_file)
+            LOGGER.info(filename)
+    else:
+        LOGGER.info('Repository is up to date')
 
 
 if __name__ == '__main__':

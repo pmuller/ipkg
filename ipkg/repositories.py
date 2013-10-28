@@ -56,6 +56,9 @@ class PackageRepository(object):
     def __repr__(self):
         return 'PakageRepository(%r)' % self.base
 
+    def __str__(self):
+        return self.base
+
     def find(self, spec, os_name, os_release, arch):
         meta = self.meta
         spec = parse_package_spec(spec)
@@ -177,6 +180,64 @@ class LocalPackageRepository(PackageRepository):
                            formula.revision, package_file)
         self.meta.save()
         return package_file
+
+    def build_formulas(self, formula_repository, env=None, verbose=False):
+        """Build all formulas and store them in this repository.
+        """
+        LOGGER.info('Building repository packages list...')
+        current_packages = list(self)
+
+        LOGGER.info('Building formulas list...')
+        formulas = list(formula_repository)
+
+        build_formulas = []
+
+        for formula_cls in formulas:
+            spec = make_package_spec(formula_cls)
+
+            if formula_cls in current_packages:
+                LOGGER.debug('%s already in repository %s', spec, self)
+
+            else:
+                LOGGER.info('New formula: %s', spec)
+                formula = formula_cls(env, verbose)
+                build_formulas.append(formula)
+
+        new_packages = []
+
+        while build_formulas:
+            build_formula = build_formulas.pop(0)
+
+            dependency_in_formulas = False
+
+            for dependency in build_formula.dependencies:
+                if ((env is not None and dependency in env.packages)
+                    or dependency in self):
+                    continue
+                elif dependency in build_formulas:
+                    build_formulas.append(build_formula)
+                    dependency_in_formulas = True
+                    LOGGER.debug('Delaying build of %s because it requires '
+                                 '%s which will be built later' %
+                                 (build_formula, dependency))
+                    break
+                else:
+                    raise IpkgException('Missing dependency: %s' % dependency)
+
+            if dependency_in_formulas:
+                continue
+
+            try:
+                package_file = self.build_formula(formula)
+
+            except IpkgException as err:
+                LOGGER.exception('Failed to build %s: %s'
+                                 % (spec, str(err)))
+
+            else:
+                new_packages.append(package_file)
+
+        return new_packages
 
     def __add_package(self, name, version, revision, filepath):
         """Add a package to the repository.

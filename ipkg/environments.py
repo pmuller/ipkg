@@ -418,5 +418,7 @@ class Environment(object):
 
     def render_arg(self, arg):
         """Render a string, replacing environment directories path."""
-        dirs = {k + '_dir': v for k, v in self.directories.items()}
+        dirs = {}
+        for k, v in self.directories.items():
+            dirs[k + '_dir'] = v
         return arg % dirs

@@ -2,9 +2,8 @@ import os
 import stat
 import re
 import logging
-from subprocess import PIPE
 
-from .utils import execute
+from .utils import execute, PIPE
 
 
 LOGGER = logging.getLogger(__name__)

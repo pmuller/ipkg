@@ -13,6 +13,8 @@ from .exceptions import IpkgException
 
 LOGGER = logging.getLogger(__name__)
 
+PIPE = subprocess.PIPE
+
 PACKAGE_SPEC_RE = re.compile(r"""
 ^
 (?P<name>[A-Za-z0-9_\-]+)

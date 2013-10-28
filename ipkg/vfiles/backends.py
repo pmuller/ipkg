@@ -1,6 +1,6 @@
 """vfiles backend classes handle protocol access to files.
 """
-import urlparse
+from urlparse import urlparse
 import logging
 import hashlib
 from cStringIO import StringIO
@@ -32,8 +32,8 @@ class InvalidChecksum(BackendException):
 class BaseFile(object):
     """Base class for virtual files.
     """
-    def __init__(self, url, expected_hash=None, hash_class=hashlib.sha256):
-        self.url = url
+    def __init__(self, name, expected_hash=None, hash_class=hashlib.sha256):
+        self.name = name
         self.expected_hash = expected_hash
         self.hash_class = hash_class
 
@@ -41,8 +41,9 @@ class BaseFile(object):
         """Validates a file checksum.
         """
         if self.expected_hash is None:
-            LOGGER.debug('No hash for %s', url)
+            LOGGER.debug('No checksum for %s', self.name)
             return
+
         else:
             hash_obj = self.hash_class()
             current_position = self.tell()
@@ -50,12 +51,14 @@ class BaseFile(object):
             self.seek(current_position)
             hash_obj.update(file_content)
             file_hash = hash_obj.hexdigest()
+
             if file_hash != self.expected_hash:
-                LOGGER.error('File hash is %s, expected hash is %s (%s)',
+                LOGGER.error('File checksum is %s, expected %s (%s)',
                              file_hash, self.expected_hash, hash_obj.name)
                 raise InvalidChecksum()
+
             else:
-                LOGGER.debug('Checksum ok for %s', self.url)
+                LOGGER.debug('Checksum ok for %s', self.name)
 
     def seek(self, *args):
         pass
@@ -71,15 +74,15 @@ class DummyFile(BaseFile):
     """A dummy file.
     """
     def read(self):
-        return self.url
+        return self.name
 
 
 class LocalFile(BaseFile):
     """A file on the local filesystem.
     """
-    def __init__(self, url, expected_hash=None, hash_class=hashlib.sha256):
-        super(LocalFile, self).__init__(url, expected_hash, hash_class)
-        filepath = urlparse.urlparse(url).path
+    def __init__(self, name, expected_hash=None, hash_class=hashlib.sha256):
+        super(LocalFile, self).__init__(name, expected_hash, hash_class)
+        filepath = urlparse(name).path
         self.__file = open(filepath)
 
     def seek(self, *args):
@@ -95,15 +98,15 @@ class LocalFile(BaseFile):
 class HttpFile(BaseFile):
     """A file on a remote HTTP server.
     """
-    def __init__(self, url, expected_hash=None, hash_class=hashlib.sha256):
-        super(HttpFile, self).__init__(url, expected_hash, hash_class)
+    def __init__(self, name, expected_hash=None, hash_class=hashlib.sha256):
+        super(HttpFile, self).__init__(name, expected_hash, hash_class)
         self.__file = None
 
     def __get_file(self):
         if self.__file is None:
             try:
-                LOGGER.info('Downloading: %s', self.url)
-                response = requests.get(self.url, stream=True)
+                LOGGER.info('Downloading: %s', self.name)
+                response = requests.get(self.name, stream=True)
 
             except requests.RequestException as exc:
                 raise HttpFileException(str(exc))
@@ -118,7 +121,7 @@ class HttpFile(BaseFile):
                         break
                 content.seek(0)
                 self.__file = content
-                LOGGER.info('Downloaded: %s', self.url)
+                LOGGER.info('Downloaded: %s', self.name)
 
         return self.__file
 

@@ -13,7 +13,7 @@ from cStringIO import StringIO
 
 import requests
 
-from . import environment
+from .environments import mkdir, Environment
 from .exceptions import IpkgException
 from .packages import META_FILE
 from .vfiles import vopen
@@ -61,14 +61,14 @@ class Formula(NameVersionRevisionComparable):
     """Arguments passed to ``./configure``"""
     configure_args = ['--prefix=%(env_dir)s']
 
-    def __init__(self, env=None, verbose=False, log=None):
+    def __init__(self, environment=None, verbose=False, log=None):
 
         # Check for mandatory attributes
         for attr in ('name', 'version', 'revision', 'sources'):
             if getattr(self, attr) is None:
                 raise IncompleteFormula(attr)
 
-        self.env = env
+        self.environment = environment
         self.verbose = verbose
         self.log = log or logging.getLogger(__name__ )
         self.commands = {}
@@ -86,9 +86,9 @@ class Formula(NameVersionRevisionComparable):
             stdout = stderr = open(os.devnull, 'w')
 
         start = time.time()
-        exit_code = self.env.execute(command,
-                                     stdout=stdout, stderr=stderr,
-                                     cwd=cwd or self.__cwd, data=data),
+        exit_code = self.environment.execute(command,
+                                             stdout=stdout, stderr=stderr,
+                                             cwd=cwd or self.__cwd, data=data),
 
         report = {
             'command': command,
@@ -104,7 +104,8 @@ class Formula(NameVersionRevisionComparable):
 
     def run_configure(self):
         command = ['./configure']
-        command.extend(self.env.render_arg(a) for a in self.configure_args)
+        render_arg = self.environment.render_arg
+        command.extend(render_arg(a) for a in self.configure_args)
         self.run_command(command)
 
     def __getattr__(self, attr):
@@ -128,26 +129,26 @@ class Formula(NameVersionRevisionComparable):
         build_dir = tempfile.mkdtemp(prefix='ipkg-build-')
 
         # Create a temporary env if no env has been previously defined
-        if self.env is None:
+        if self.environment is None:
             LOGGER.info('Creating temporary build environment')
             prefix = os.path.join(build_dir, 'environment')
-            self.env = environment.Environment(prefix, os.environ)
-            self.env.create_directories()
+            self.environment = Environment(prefix, os.environ)
+            self.environment.create_directories()
 
-        env_prefix = self.env.prefix
+        env_prefix = self.environment.prefix
 
         # Install dependencies in build environment
         if self.dependencies:
             LOGGER.info('Build dependencies: %s',
                         ', '.join(self.dependencies))
             for dependency in self.dependencies:
-                if dependency not in self.env.packages:
-                    self.env.install(dependency, repository)
+                if dependency not in self.environment.packages:
+                    self.environment.install(dependency, repository)
                     installed_dependencies.append(dependency)
 
         # Create the sources root directory
         self.src_root = src_root = os.path.join(build_dir, 'sources')
-        environment.mkdir(src_root, False)
+        mkdir(src_root, False)
 
         # Unarchive the sources file and store the sources directory as cwd 
         # for use when running commands from now
@@ -182,7 +183,7 @@ class Formula(NameVersionRevisionComparable):
         if self.dependencies:
             LOGGER.debug('Uninstalling dependencies from build environment')
             for dependency in self.dependencies:
-                self.env.uninstall(dependency)
+                self.environment.uninstall(dependency)
 
         if remove_build_dir:
             LOGGER.debug('Removing build directory: %s', build_dir)
@@ -205,9 +206,9 @@ class Formula(NameVersionRevisionComparable):
             'name': self.name,
             'version': self.version,
             'revision': str(self.revision),
-            'os_name': self.env.os_name,
-            'os_release': self.env.os_release,
-            'arch': self.env.arch,
+            'os_name': self.environment.os_name,
+            'os_release': self.environment.os_release,
+            'arch': self.environment.arch,
             'dependencies': self.dependencies,
             'homepage': self.homepage,
             'hostname': socket.gethostname().split('.')[0],
@@ -235,7 +236,7 @@ class Formula(NameVersionRevisionComparable):
         with tarfile.open(filepath, 'w:bz2') as pkg:
             pkg.addfile(meta_tarinfo, meta_string)
             for pkg_file in files:
-                pkg.add(os.path.join(self.env.prefix, pkg_file),
+                pkg.add(os.path.join(self.environment.prefix, pkg_file),
                         pkg_file, recursive=False)
 
         LOGGER.info('Package %s created', filepath)
@@ -280,7 +281,7 @@ class Formula(NameVersionRevisionComparable):
         return formula_class
 
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.env)
+        return '%s(%r)' % (self.__class__.__name__, self.environment)
 
 
 class File(object):

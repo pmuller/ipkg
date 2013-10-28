@@ -181,7 +181,8 @@ class LocalPackageRepository(PackageRepository):
         self.meta.save()
         return package_file
 
-    def build_formulas(self, formula_repository, env=None, verbose=False):
+    def build_formulas(self, formula_repository,
+                       environment=None, verbose=False):
         """Build all formulas and store them in this repository.
         """
         LOGGER.info('Building repository packages list...')
@@ -200,7 +201,7 @@ class LocalPackageRepository(PackageRepository):
 
             else:
                 LOGGER.info('New formula: %s', spec)
-                formula = formula_cls(env, verbose)
+                formula = formula_cls(environment, verbose)
                 build_formulas.append(formula)
 
         new_packages = []
@@ -211,7 +212,8 @@ class LocalPackageRepository(PackageRepository):
             dependency_in_formulas = False
 
             for dependency in build_formula.dependencies:
-                if ((env is not None and dependency in env.packages)
+                if ((environment is not None and
+                     dependency in environment.packages)
                     or dependency in self):
                     continue
                 elif dependency in build_formulas:

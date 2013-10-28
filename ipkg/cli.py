@@ -5,7 +5,8 @@ import logging
 import types
 import pkg_resources
 
-from . import environment, packages, repositories
+from . import packages, repositories
+from .environments import current, Environment
 from .exceptions import IpkgException
 from .build import Formula
 
@@ -18,8 +19,9 @@ class Ipkg(object):
     """
     def __init__(self):
         self.parser = parser = argparse.ArgumentParser()
-        parser.add_argument('--debug', '-D', action='store_true',
-                            default=False, help='Show debug messages.')
+        parser.add_argument('--debug', '-D',
+                            action='store_true', default=False,
+                            help='Show debug messages.')
         parser.add_argument('--version', action='version',
                             version=pkg_resources.require('ipkg')[0].version)
         self.subparsers = parser.add_subparsers()
@@ -46,7 +48,7 @@ class Ipkg(object):
         try:
             if func.func_name not in ('build', 'build_repository'):
                 if 'env' in args and args['env'] is None:
-                    args['env'] = environment.current()
+                    args['env'] = current()
             func(**args)
         except IpkgException as exception:
             if debug:
@@ -135,123 +137,128 @@ class Argument(object):
 
 @ipkg.command(
     'list',
-    Argument('--environment', '-e', metavar='ENV', dest='env',
-             type=environment.Environment,
+    Argument('--environment', '-e',
+             metavar='ENV', type=Environment,
              help='The environment in which the package will be installed.'),
 )
-def list_packages(env):
+def list_packages(environment):
     """List installed packages.
     """
-    for package in env.packages:
+    for package in environment.packages:
         print package
 
 
 @ipkg.command(
-    Argument('--environment', '-e', metavar='ENV', dest='env',
-             type=environment.Environment,
+    Argument('--environment', '-e',
+             metavar='ENV', type=Environment,
              help='The environment in which the package will be installed.'),
-    Argument('--repository', '-r', metavar='URL',
-             type=repositories.PackageRepository,
+    Argument('--repository', '-r',
+             metavar='URL', type=repositories.PackageRepository,
              help='Use a repository to find the package'),
     Argument('package', metavar='PKG'),
 )
-def install(env, package, repository):
+def install(environment, package, repository):
     """Install a package."""
-    env.install(package, repository)
+    environment.install(package, repository)
 
 
 @ipkg.command(
-    Argument('--environment', '-e', metavar='ENV', dest='env',
-             type=environment.Environment,
+    Argument('--environment', '-e',
+             metavar='ENV', type=Environment,
              help='The environment from which the '
                   'package will be uninstalled.'),
     Argument('package', metavar='PKG'),
 )
-def uninstall(env, package):
+def uninstall(environment, package):
     """Uninstall a package.
     """
-    env.uninstall(package)
+    environment.uninstall(package)
 
 
 @ipkg.command(
-    Argument('env', metavar='ENV', type=environment.Environment,
+    Argument('environment',
+             metavar='ENV', type=Environment,
              help='Path of the environment.'),
 )
 def mkenv(env):
     """Create an environment.
     """
-    env.create_directories()
+    environment.create_directories()
 
 
 @ipkg.command(
     Argument('--export', '-x', action='store_true', default=False,
              help='Prefix variables with the export keyword.'),
-    Argument('env', metavar='ENV',
-             type=environment.Environment,
+    Argument('environment',
+             metavar='ENV', type=Environment,
              help='Path of the environment.')
 )
-def printenv(env, export):
+def printenv(environment, export):
     """Show the environment variables of an ipkg environment.
     """
-    sys.stdout.write(env.variables_string(export))
+    sys.stdout.write(environment.variables_string(export))
 
 
 @ipkg.command(
     'exec',
-    Argument('env', metavar='ENV',
-             type=environment.Environment,
+    Argument('environment',
+             metavar='ENV', type=Environment,
              help='Path of the environment.'),
     Argument('command', metavar='COMMAND', help='Path of the executable.'),
     Argument('arguments', metavar='ARG', nargs='*', help='Command arguments.'),
 )
-def execute(env, command, arguments):
+def execute(environment, command, arguments):
     """Run a command in an environment.
     """
     command = [command]
     command.extend(arguments)
-    env.execute(command)
+    environment.execute(command)
 
 
 @ipkg.command(
-    Argument('--shell', '-s', default='/bin/bash',
+    Argument('--shell', '-s',
+             default='/bin/bash',
              help='Shell executable (Default: "%(default)s")'),
-    Argument('env', metavar='ENV',
-             type=environment.Environment,
-             help='Path of the environment'),
+    Argument('environment',
+             metavar='ENV', type=Environment,
+             help='Path of the environment.'),
 )
-def shell(env, shell):
+def shell(environment, shell):
     """Launch an interactive shell."""
     arguments = shell.split()
     shell = arguments.pop(0)
-    env.execute(shell, arguments)
+    environment.execute(shell, arguments)
 
 
 @ipkg.command(
-    Argument('--environment', '-e', metavar='ENV', dest='env',
-             type=environment.Environment,
+    Argument('--environment', '-e',
+             metavar='ENV', type=Environment,
              help='The environment in which the '
                   'package will be built.'),
-    Argument('--repository', '-r', metavar='URL',
-             type=repositories.PackageRepository,
+    Argument('--repository', '-r',
+             metavar='URL', type=repositories.PackageRepository,
              help='Use a repository to find the dependencies.'),
-    Argument('--package-dir', '-p', metavar='DIR', default=os.getcwd(),
+    Argument('--package-dir', '-p',
+             metavar='DIR', default=os.getcwd(),
              help='Where to store the package. Default: current directory.'),
-    Argument('--keep-build-dir', '-k', action='store_false', default=True,
-             dest='remove_build_dir',
+    Argument('--keep-build-dir', '-k',
+             action='store_false', default=True, dest='remove_build_dir',
              help="Don't remove the build directory."),
-    Argument('--update-repository', '-u', action='store_true', default=False,
+    Argument('--update-repository', '-u',
+             action='store_true', default=False,
              help='Add the newly built package to the repository. '
                   'Only works with local repositories.'),
-    Argument('--verbose', '-v', action='store_true', default=False,
+    Argument('--verbose', '-v',
+             action='store_true', default=False,
              help='Show commands output.'),
     Argument('build_file',
              help='A python module which contains a Formula class.'),
 )
-def build(build_file, env, verbose, repository, package_dir,
+def build(build_file, environment, verbose, repository, package_dir,
           remove_build_dir, update_repository):
     """Build a package.
     """
-    formula = Formula.from_file(build_file)(env, verbose)
+    formula = Formula.from_file(build_file)(environment, verbose)
 
     if update_repository:
         repository = repositories.LocalPackageRepository(repository.base)
@@ -261,8 +268,8 @@ def build(build_file, env, verbose, repository, package_dir,
 
 
 @ipkg.command(
-    Argument('repository', metavar='PATH',
-             type=repositories.LocalPackageRepository,
+    Argument('repository',
+             metavar='PATH', type=repositories.LocalPackageRepository,
              help='Path of the repository.'),
 )
 def mkrepo(repository):
@@ -271,11 +278,12 @@ def mkrepo(repository):
 
 @ipkg.command(
     'build-repository',
-    Argument('--environment', '-e', metavar='ENV', dest='env',
-             type=environment.Environment,
+    Argument('--environment', '-e',
+             metavar='ENV', type=Environment,
              help='The environment in which the '
                   'packages will be built.'),
-    Argument('--verbose', '-v', action='store_true', default=False,
+    Argument('--verbose', '-v',
+             action='store_true', default=False,
              help='Show commands output.'),
     Argument('package_repository',
              type=repositories.LocalPackageRepository,
@@ -284,11 +292,12 @@ def mkrepo(repository):
              type=repositories.FormulaRepository,
              help='Path of the formulas.'),
 )
-def build_repository(env, verbose, package_repository, formula_repository):
+def build_repository(environment, verbose,
+                     package_repository, formula_repository):
     """Build all formulas and store them in a repository.
     """
     new_packages = package_repository.build_formulas(formula_repository,
-                                                     env, verbose)
+                                                     environment, verbose)
     if new_packages:
         LOGGER.info('New packages:')
         for package_file in new_packages:

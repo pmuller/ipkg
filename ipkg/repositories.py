@@ -54,7 +54,7 @@ class PackageRepository(object):
         self.meta = DictFile(os.path.join(base, self.META_FILE_NAME))
 
     def __repr__(self):
-        return 'PakageRepository(%r)' % self.base
+        return 'PackageRepository(%r)' % self.base
 
     def __str__(self):
         return self.base

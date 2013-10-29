@@ -18,8 +18,7 @@ class TestPathListVariable(TestCase):
         self.assertEqual(var.value, '')
         var.set('/bin:/sbin')
         self.assertEqual(var.value, '/bin:/sbin')
-        with self.assertRaises(InvalidVariableValue):
-            var.set(42)
+        self.assertRaises(InvalidVariableValue, var.set, 42)
 
     def test_remove(self):
         var = PathListVariable('foo', '/bin:/sbin:/usr/local/bin')

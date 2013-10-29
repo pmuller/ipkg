@@ -10,13 +10,13 @@ import tempfile
 import shutil
 import bz2
 import json
-import platform
 
 from .exceptions import IpkgException
 from .packages import BasePackage, InstalledPackage, PackageFile
 from .prefix_rewriters import rewrite_prefix
 from .utils import DictFile, execute, make_package_spec, mkdir
 from .compat import basestring
+from . import platform
 
 
 LOGGER = logging.getLogger(__name__)
@@ -165,7 +165,7 @@ class Environment(object):
             #ArgumentListVariable: ['LDFLAGS', 'CFLAGS', 'CXXFLAGS'],
         }
 
-        if self.os_name == 'osx':
+        if platform.NAME == 'osx':
             dyn_lib_var_name = 'DYLD_LIBRARY_PATH'
         else:
             dyn_lib_var_name = 'LD_LIBRARY_PATH'
@@ -304,9 +304,9 @@ class Environment(object):
                     raise IpkgException('Cannot find package %s' % package)
                 else:
                     package = repository.find(package,
-                                              os_name=self.os_name,
-                                              os_release=self.os_release,
-                                              arch=self.arch)
+                                              os_name=platform.NAME,
+                                              os_release=platform.RELEASE,
+                                              arch=platform.ARCHITECTURE)
 
         elif not isinstance(package, BasePackage):
             raise IpkgException('Invalid package: %r' % package)
@@ -367,50 +367,6 @@ class Environment(object):
                 value = self.render_arg(value)
                 LOGGER.debug('Adding variable %s=%s', name, value)
                 self.variables[name] = Variable(name, value)
-
-    @property
-    def os_release(self):
-        """The OS release of the OS running the environment.
-        """
-        system = platform.system()
-        if system == 'Linux':
-            _, release, _ = platform.dist()
-        elif system == 'Darwin':
-            release = platform.mac_ver()[0]
-        else:
-            raise UnknownSystem(system)
-        return release
-
-    @property
-    def os_name(self):
-        """Return the OS name for the environment.
-
-        Currently only supports Linux distributions and Mac OS X.
-
-        Linux distribution names: ???
-        Mac OS X name: ``osx``
-        """
-        system = platform.system()
-        if system == 'Linux':
-            name, _, _ = platform.dist()
-        elif system == 'Darwin':
-            name = 'osx'
-        else:
-            raise UnknownSystem(system)
-        return name
-
-    @property
-    def arch(self):
-        """The environment architecture. eg ``x86_64``.
-        """
-        return platform.machine()
-
-    @property
-    def platform(self):
-        """The platform running the environment.
-           A string formatted as ``os_name-os_release-arch``.
-        """
-        return '%s-%s-%s' % (self.os_name, self.os_release, self.arch)
 
     @property
     def packages(self):

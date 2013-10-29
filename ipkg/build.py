@@ -5,7 +5,6 @@ import shutil
 import logging
 import hashlib
 import time
-import socket
 import tarfile
 import json
 
@@ -14,8 +13,6 @@ try:
 except ImportError: # Python 3
     from io import StringIO
 
-import requests
-
 from .environments import Environment
 from .exceptions import IpkgException
 from .packages import META_FILE
@@ -23,6 +20,7 @@ from .files import vopen
 from .mixins import NameVersionRevisionComparable
 from .utils import unarchive, mkdir
 from .compat import basestring
+from . import platform
 
 
 LOGGER = logging.getLogger(__name__)
@@ -210,12 +208,12 @@ class Formula(NameVersionRevisionComparable):
             'name': self.name,
             'version': self.version,
             'revision': str(self.revision),
-            'os_name': self.environment.os_name,
-            'os_release': self.environment.os_release,
-            'arch': self.environment.arch,
+            'os_name': platform.NAME,
+            'os_release': platform.RELEASE,
+            'arch': platform.ARCHITECTURE,
             'dependencies': self.dependencies,
             'homepage': self.homepage,
-            'hostname': socket.gethostname().split('.')[0],
+            'hostname': platform.HOSTNAME,
             'timestamp': time.time(),
             'files': tuple(files),
             'build_prefix': build_dir,
@@ -257,7 +255,7 @@ class Formula(NameVersionRevisionComparable):
         """
         #LOGGER.debug('%s.from_file("%s")', cls.__name__, filepath)
 
-        globals_ = {'Formula': cls, 'File': File}
+        globals_ = {'Formula': cls, 'File': File, 'platform': platform}
         locals_ = {}
 
         with open(filepath) as bf:

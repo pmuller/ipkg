@@ -1,4 +1,5 @@
 import operator
+from types import StringTypes
 
 from pkg_resources import parse_version
 
@@ -17,7 +18,7 @@ class NameVersionRevisionComparable(object):
                    self.version == other.version and \
                    str(self.revision) == str(other.revision)
 
-        elif isinstance(other, basestring):
+        elif type(other) in StringTypes:
             spec = parse_package_spec(other)
             if spec['name'] == self.name:
                 if spec.get('version') is not None:
@@ -64,7 +65,7 @@ class NameVersionRevisionComparable(object):
             else:
                 return False
 
-        elif isinstance(other, basestring):
+        elif type(other) in StringTypes:
             spec = parse_package_spec(other)
 
             if spec['name'] == self.name:

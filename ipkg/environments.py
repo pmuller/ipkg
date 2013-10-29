@@ -12,6 +12,7 @@ import bz2
 import json
 import platform
 from collections import OrderedDict
+from types import StringTypes
 
 from .exceptions import IpkgException
 from .packages import BasePackage, InstalledPackage, PackageFile
@@ -60,7 +61,7 @@ class Variable(object):
         self.set(value)
 
     def set(self, value):
-        if isinstance(value, basestring):
+        if type(value) in StringTypes:
             self.__value = value
         else:
             raise InvalidVariableValue(self.name, value)
@@ -94,7 +95,7 @@ class ListVariable(Variable):
     def set(self, value):
         if value is None:
             self.__paths = []
-        elif isinstance(value, basestring):
+        elif type(value) in StringTypes:
             self.__paths = value.split(self.LIST_SEPARATOR)
         else:
             raise InvalidVariableValue(self.name, value)
@@ -292,7 +293,7 @@ class Environment(object):
         """
         LOGGER.info('Installing %s', package)
 
-        if isinstance(package, basestring):
+        if type(package) in StringTypes:
             if os.path.exists(package):
                 # If package is a string and exists on the filesystem,
                 # use it

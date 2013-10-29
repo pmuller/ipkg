@@ -7,6 +7,7 @@ import subprocess
 import tarfile
 import zipfile
 import errno
+from types import StringTypes
 
 from .files import vopen
 from .exceptions import IpkgException
@@ -134,7 +135,7 @@ def execute(command,
         kw['stdin'] = PIPE
 
     # If command is a string, split it to get a format that Popen understands
-    if isinstance(command, basestring):
+    if type(command) in StringTypes:
         command_ = command.split()
     else:
         command_ = command

@@ -8,6 +8,7 @@ import time
 import socket
 import tarfile
 import json
+from types import StringTypes
 
 try:
     from cStringIO import StringIO
@@ -79,7 +80,7 @@ class Formula(NameVersionRevisionComparable):
         self.__cwd = os.getcwd()
 
     def run_command(self, command, data=None, cwd=None):
-        cmd = command if isinstance(command, basestring) else ' '.join(command)
+        cmd = command if type(command) in StringTypes else ' '.join(command)
         LOGGER.info('Running: %s', cmd)
 
         if self.verbose:
@@ -116,7 +117,7 @@ class Formula(NameVersionRevisionComparable):
             command = [attr.split('_', 1)[1]]
             def func(args=None, **kw):
                 if args:
-                    if isinstance(args, basestring):
+                    if type(args) in StringTypes:
                         args = args.split()
                     command.extend(args)
                 self.run_command(command, **kw)

@@ -17,7 +17,7 @@ def vopen(url, **kw):
        Its URL is used to determine which backend will handle it,
        making HTTP requests or filesystem calls as needed.
     """
-    info = urlparse.urlparse(url)
+    info = urlparse(url)
     scheme = info.scheme or DEFAULT_SCHEME
 
     for backend_ep in iter_entry_points(group='ipkg.files.backend'):

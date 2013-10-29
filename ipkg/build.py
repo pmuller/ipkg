@@ -6,7 +6,6 @@ import logging
 import hashlib
 import time
 import socket
-#import pwd
 import tarfile
 import json
 
@@ -216,7 +215,6 @@ class Formula(NameVersionRevisionComparable):
             'dependencies': self.dependencies,
             'homepage': self.homepage,
             'hostname': socket.gethostname().split('.')[0],
-            #'user': pwd.getpwuid(os.getuid()).pw_name,
             'timestamp': time.time(),
             'files': tuple(files),
             'build_prefix': build_dir,

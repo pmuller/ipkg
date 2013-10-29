@@ -157,6 +157,11 @@ def execute(command,
         raise ExecutionFailed(command,
                               'exited with code %i' % process.returncode)
 
+    if hasattr(stdout_str, 'decode'):
+        stdout_str = stdout_str.decode('UTF-8')
+    if hasattr(stderr_str, 'decode'):
+        stderr_str = stderr_str.decode('UTF-8')
+
     return stdout_str, stderr_str
 
 

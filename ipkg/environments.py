@@ -11,7 +11,6 @@ import shutil
 import bz2
 import json
 import platform
-from collections import OrderedDict
 
 from .exceptions import IpkgException
 from .packages import BasePackage, InstalledPackage, PackageFile
@@ -136,7 +135,7 @@ class Environment(object):
     def __init__(self, prefix, default_variables=os.environ):
         self.prefix = prefix
 
-        directories = OrderedDict((
+        directories = dict((
             ('env', self.prefix),
             ('bin', os.path.join(prefix, 'bin')),
             ('sbin', os.path.join(prefix, 'sbin')),

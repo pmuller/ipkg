@@ -52,6 +52,21 @@ class InvalidVariableValue(IpkgException):
                                                                   self.value)
 
 
+def in_env():
+    """Returns ``True`` if running inside an ipkg environment.
+    """
+    return 'IPKG_ENVIRONMENT' in os.environ
+
+
+def current():
+    """Get the ``Environment`` we are currently using.
+    """
+    if in_env():
+        return Environment(os.environ['IPKG_ENVIRONMENT'])
+    else:
+        raise UnknownEnvironment()
+
+
 class Variable(object):
     """An environment variable with free text value.
     """
@@ -71,17 +86,6 @@ class Variable(object):
 
     def __str__(self):
         return "%s='%s'" % (self.name, self.value)
-
-
-def in_env():
-    return 'IPKG_ENVIRONMENT' in os.environ
-
-
-def current():
-    if in_env():
-        return Environment(os.environ['IPKG_ENVIRONMENT'])
-    else:
-        raise UnknownEnvironment()
 
 
 class ListVariable(Variable):

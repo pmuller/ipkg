@@ -132,6 +132,7 @@ def execute(command,
         if stdin:
             kw['stdin'] = stdin
     else:
+        data = data.encode('UTF-8') # Python 3 compat
         kw['stdin'] = PIPE
 
     # If command is a string, split it to get a format that Popen understands

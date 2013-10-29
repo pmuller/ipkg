@@ -60,7 +60,7 @@ class TestExecute(TestCase):
 
     def test_get_stdout_as_string(self):
         out = execute('echo 42', stdout=PIPE)[0]
-        self.assertEqual(out, '42\n')
+        self.assertEqual(str(out), '42\n')
 
 # FIXME: Why does it fails?!
 #    def test_get_stderr_as_string(self):
@@ -82,7 +82,7 @@ class TestExecute(TestCase):
     def test_with_env(self):
         out = execute(['sh', '-c', 'echo $FOO'],
                       env={'FOO': '42'}, stdout=PIPE)[0]
-        self.assertEqual(out, '42\n')
+        self.assertEqual(str(out), '42\n')
 
 
 class TestMakePackageSpec(TestCase):

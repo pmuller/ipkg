@@ -12,12 +12,12 @@ import bz2
 import json
 import platform
 from collections import OrderedDict
-from types import StringTypes
 
 from .exceptions import IpkgException
 from .packages import BasePackage, InstalledPackage, PackageFile
 from .prefix_rewriters import rewrite_prefix
 from .utils import DictFile, execute, make_package_spec, mkdir
+from .compat import basestring
 
 
 LOGGER = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class Variable(object):
         self.set(value)
 
     def set(self, value):
-        if type(value) in StringTypes:
+        if isinstance(value, basestring):
             self.__value = value
         else:
             raise InvalidVariableValue(self.name, value)
@@ -95,7 +95,7 @@ class ListVariable(Variable):
     def set(self, value):
         if value is None:
             self.__paths = []
-        elif type(value) in StringTypes:
+        elif isinstance(value, basestring):
             self.__paths = value.split(self.LIST_SEPARATOR)
         else:
             raise InvalidVariableValue(self.name, value)
@@ -293,7 +293,7 @@ class Environment(object):
         """
         LOGGER.info('Installing %s', package)
 
-        if type(package) in StringTypes:
+        if isinstance(package, basestring):
             if os.path.exists(package):
                 # If package is a string and exists on the filesystem,
                 # use it

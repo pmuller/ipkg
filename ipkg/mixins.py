@@ -1,9 +1,9 @@
 import operator
-from types import StringTypes
 
 from pkg_resources import parse_version
 
 from .utils import is_package_like, parse_package_spec
+from .compat import basestring
 
 
 class NameVersionRevisionComparable(object):
@@ -18,7 +18,7 @@ class NameVersionRevisionComparable(object):
                    self.version == other.version and \
                    str(self.revision) == str(other.revision)
 
-        elif type(other) in StringTypes:
+        elif isinstance(other, basestring):
             spec = parse_package_spec(other)
             if spec['name'] == self.name:
                 if spec.get('version') is not None:
@@ -65,7 +65,7 @@ class NameVersionRevisionComparable(object):
             else:
                 return False
 
-        elif type(other) in StringTypes:
+        elif isinstance(other, basestring):
             spec = parse_package_spec(other)
 
             if spec['name'] == self.name:

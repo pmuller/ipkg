@@ -7,10 +7,10 @@ import subprocess
 import tarfile
 import zipfile
 import errno
-from types import StringTypes
 
 from .files import vopen
 from .exceptions import IpkgException
+from .compat import basestring
 
 
 LOGGER = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ def execute(command,
         kw['stdin'] = PIPE
 
     # If command is a string, split it to get a format that Popen understands
-    if type(command) in StringTypes:
+    if isinstance(command, basestring):
         command_ = command.split()
     else:
         command_ = command

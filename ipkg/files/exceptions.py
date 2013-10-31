@@ -1,9 +1,9 @@
 from ..exceptions import IpkgException
 
 
-class VFilesException(IpkgException):
+class FilesException(IpkgException):
     """A vfiles error."""
 
 
-class UnknownScheme(VFilesException):
-    pass
+class UnknownScheme(FilesException):
+    """Unknown file scheme."""

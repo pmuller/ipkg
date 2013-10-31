@@ -21,9 +21,9 @@ setup(
         eggsecutable = ipkg.cli:ipkg
 
         [ipkg.files.backend]
-        file=ipkg.files.backends:LocalFile
-        http=ipkg.files.backends:HttpFile
-        https=ipkg.files.backends:HttpFile
+        file=ipkg.files.backends.filesystem:LocalFile
+        http=ipkg.files.backends.http:HttpFile
+        https=ipkg.files.backends.http:HttpFile
     """,
     classifiers="""
         Development Status :: 3 - Alpha

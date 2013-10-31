@@ -276,6 +276,4 @@ class FormulaRepository(object):
                 if FORMULA_FILE_RE.match(formula_file):
                     formula_filepath = os.path.join(name_dir, formula_file)
                     formulas.append(Formula.from_file(formula_filepath))
-                #else:
-                #    LOGGER.warning('Ignoring formula: %r', formula_file)
         return iter(formulas)

@@ -8,18 +8,13 @@ import time
 import tarfile
 import json
 
-try:
-    from cStringIO import StringIO
-except ImportError: # Python 3
-    from io import StringIO
-
 from .environments import Environment
 from .exceptions import IpkgException
 from .packages import META_FILE
 from .files import vopen
 from .mixins import NameVersionRevisionComparable
 from .utils import unarchive, mkdir
-from .compat import basestring
+from .compat import basestring, StringIO
 from . import platform
 
 

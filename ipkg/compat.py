@@ -7,3 +7,9 @@ try:
     basestring = basestring
 except NameError:
     basestring = str
+
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO

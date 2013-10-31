@@ -1,14 +1,10 @@
 import logging
 
-try:
-    from cStringIO import StringIO
-except ImportError: # Python 3
-    from io import StringIO
-
 import requests
 
 from . import BaseFile, BackendException
 from .. import cache
+from ...compat import StringIO
 
 
 LOGGER = logging.getLogger(__name__)

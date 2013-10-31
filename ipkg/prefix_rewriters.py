@@ -1,24 +1,22 @@
 import os
 import stat
-import re
 import logging
 
 from .utils import execute, PIPE
+from .regex import PKGCONFIG_FILE, LIBTOOL_FILE
 
 
 LOGGER = logging.getLogger(__name__)
-PKGCONFIG_FILE_RE = re.compile(r'^lib(64)?/pkgconfig/[^/]+\.pc$')
-LIBTOOL_FILE_RE = re.compile(r'^lib(64)?/[^/]+\.la$')
 
 
 def rewrite_prefix(package_file, build_prefix, install_prefix):
 
     file_path = os.path.join(install_prefix, package_file)
 
-    if PKGCONFIG_FILE_RE.match(package_file):
+    if PKGCONFIG_FILE.match(package_file):
         rewrite_pkgconfig(file_path, build_prefix, install_prefix)
 
-    elif LIBTOOL_FILE_RE.match(package_file):
+    elif LIBTOOL_FILE.match(package_file):
         rewrite_libtool(file_path, build_prefix, install_prefix)
     
     else:

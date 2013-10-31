@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import json
 import logging
@@ -11,25 +10,11 @@ import errno
 from .files import vopen
 from .exceptions import IpkgException
 from .compat import basestring
+from .regex import PACKAGE_SPEC
 
 
 LOGGER = logging.getLogger(__name__)
-
 PIPE = subprocess.PIPE
-
-PACKAGE_SPEC_RE = re.compile(r"""
-^
-(?P<name>[A-Za-z0-9_\-]+)
-(
-    (?P<operator>==)
-    (?P<version>[0-9a-zA-Z\.\-_]+)
-    (
-        :
-        (?P<revision>\w+)
-    )?
-)?
-$
-""", re.X)
 
 
 class ExecutionFailed(IpkgException):
@@ -198,7 +183,7 @@ def make_package_spec(obj):
 def parse_package_spec(spec):
     """Parse a package ``spec``.
     """
-    match = PACKAGE_SPEC_RE.match(spec)
+    match = PACKAGE_SPEC.match(spec)
     if match:
         return match.groupdict()
     else:

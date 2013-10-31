@@ -2,7 +2,6 @@ import logging
 import hashlib
 import os
 import json
-import re
 
 from pkg_resources import parse_version
 
@@ -11,37 +10,11 @@ from .exceptions import IpkgException
 from .files import vopen
 from .utils import DictFile, parse_package_spec, make_package_spec, mkdir
 from .build import Formula
+from .regex import FORMULA_FILE
 
 
 LOGGER = logging.getLogger(__name__)
 
-FORMULA_FILE_RE = re.compile(r"""
-^
-(?P<name>[A-Za-z0-9_\-]+)
--
-(?P<version>[0-9a-zA-Z\.\-_]+)
--
-(?P<revision>\w+)
-\.py
-$
-""", re.X)
-
-PACKAGE_FILE_RE = re.compile(r"""
-^
-(?P<name>[A-Za-z0-9_\-]+)
--
-(?P<version>[0-9a-zA-Z\.\-_]+)
--
-(?P<revision>\w+)
--
-(?P<os_name>\w+)
--
-(?P<os_release>[\.\w]+)
--
-(?P<arch>[_\w]+)
-\.ipkg
-$
-""", re.X)
 
 
 class PackageRepository(object):
@@ -273,7 +246,7 @@ class FormulaRepository(object):
             if not os.path.isdir(name_dir):
                 continue
             for formula_file in os.listdir(name_dir):
-                if FORMULA_FILE_RE.match(formula_file):
+                if FORMULA_FILE.match(formula_file):
                     formula_filepath = os.path.join(name_dir, formula_file)
                     formulas.append(Formula.from_file(formula_filepath))
         return iter(formulas)

@@ -113,27 +113,31 @@ class HttpFile(BaseFile):
         super(HttpFile, self).__init__(name, expected_hash, hash_class)
         self.__file = None
 
+    def __download(self):
+        LOGGER.info('Downloading: %s', self.name)
+        try:
+            response = requests.get(self.name, stream=True)
+
+        except requests.RequestException as exc:
+            raise HttpFileException(str(exc))
+
+        else:
+            content = StringIO()
+
+            while True:
+                data = response.raw.read(1024 * 1024)
+                if data:
+                    content.write(data)
+                else:
+                    break
+            
+            content.seek(0)
+            self.__file = content
+            LOGGER.info('Downloaded: %s', self.name)
+
     def __get_file(self):
         if self.__file is None:
-            try:
-                LOGGER.info('Downloading: %s', self.name)
-                response = requests.get(self.name, stream=True)
-
-            except requests.RequestException as exc:
-                raise HttpFileException(str(exc))
-
-            else:
-                content = StringIO()
-                while True:
-                    data = response.raw.read(1024 * 1024)
-                    if data:
-                        content.write(data)
-                    else:
-                        break
-                content.seek(0)
-                self.__file = content
-                LOGGER.info('Downloaded: %s', self.name)
-
+            self.__download()
         return self.__file
 
     def seek(self, *args):

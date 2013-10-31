@@ -47,8 +47,8 @@ class Ipkg(object):
 
         try:
             if func.func_name not in ('build', 'build_repository'):
-                if 'env' in args and args['env'] is None:
-                    args['env'] = current()
+                if 'environment' in args and args['environment'] is None:
+                    args['environment'] = current()
             func(**args)
         except IpkgException as exception:
             if debug:

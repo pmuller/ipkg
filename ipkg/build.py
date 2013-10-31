@@ -61,7 +61,7 @@ class Formula(NameVersionRevisionComparable):
     homepage = None
     envvars = None
     """Arguments passed to ``./configure``"""
-    configure_args = ['--prefix=%(env_dir)s']
+    configure_args = ['--prefix=%(prefix)s']
 
     def __init__(self, environment=None, verbose=False, log=None):
 
@@ -106,8 +106,8 @@ class Formula(NameVersionRevisionComparable):
 
     def run_configure(self):
         command = ['./configure']
-        render_arg = self.environment.render_arg
-        command.extend(render_arg(a) for a in self.configure_args)
+        directories = self.environment.directories
+        command.extend(arg % directories for arg in self.configure_args)
         self.run_command(command)
 
     def __getattr__(self, attr):
@@ -134,8 +134,8 @@ class Formula(NameVersionRevisionComparable):
         if self.environment is None:
             LOGGER.info('Creating temporary build environment')
             prefix = os.path.join(build_dir, 'environment')
-            self.environment = Environment(prefix, os.environ)
-            self.environment.create_directories()
+            self.environment = Environment(prefix)
+            self.environment.directories.create()
 
         env_prefix = self.environment.prefix
 

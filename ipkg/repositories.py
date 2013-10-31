@@ -6,7 +6,7 @@ import re
 
 from pkg_resources import parse_version
 
-from .packages import PackageFile
+from .packages import MetaPackage, PackageFile
 from .exceptions import IpkgException
 from .files import vopen
 from .utils import DictFile, parse_package_spec, make_package_spec, mkdir
@@ -97,7 +97,7 @@ class PackageRepository(object):
             versions = sorted(versions, key=parse_version, cmp=compare)
             version = versions[-1]
 
-        revisions = self.meta[name][version].keys()
+        revisions = [str(r) for r in self.meta[name][version]]
         revisions = sorted(revisions, key=parse_version, cmp=compare)
         revision = revisions[-1]
 
@@ -105,14 +105,10 @@ class PackageRepository(object):
 
     def __iter__(self):
         packages = []
-        for name in self.meta:
-            name_dir = os.path.join(self.base, name)
-            if not os.path.isdir(name_dir):
-                continue
-            for package_file in os.listdir(name_dir):
-                if PACKAGE_FILE_RE.match(package_file):
-                    package_filepath = os.path.join(name_dir, package_file)
-                    packages.append(PackageFile(package_filepath))
+        for name, versions in self.meta.items():
+            for version, revisions in versions.items():
+                for revision, meta in revisions.items():
+                    packages.append(MetaPackage(meta))
         return iter(packages)
 
 
@@ -185,61 +181,57 @@ class LocalPackageRepository(PackageRepository):
                        environment=None, verbose=False):
         """Build all formulas and store them in this repository.
         """
-        LOGGER.info('Building repository packages list...')
-        current_packages = list(self)
+        formulas = [] # formulas not already built 
+        built_packages = [] # new packages
 
-        LOGGER.info('Building formulas list...')
-        formulas = list(formula_repository)
+        LOGGER.debug('Building repository packages list...')
+        repo_packages = list(self)
 
-        build_formulas = []
+        for formula_cls in formula_repository:
+            if formula_cls not in repo_packages:
+                formulas.append(formula_cls(environment, verbose))
+        LOGGER.debug('Formulas: %r', formulas)
 
-        for formula_cls in formulas:
-            spec = make_package_spec(formula_cls)
+        while formulas:
+            build_later = False
+            formula = formulas.pop(0)
 
-            if formula_cls in current_packages:
-                LOGGER.debug('%s already in repository %s', spec, self)
+            for dependency in formula.dependencies:
 
-            else:
-                LOGGER.info('New formula: %s', spec)
-                formula = formula_cls(environment, verbose)
-                build_formulas.append(formula)
-
-        new_packages = []
-
-        while build_formulas:
-            build_formula = build_formulas.pop(0)
-
-            dependency_in_formulas = False
-
-            for dependency in build_formula.dependencies:
-                if ((environment is not None and
-                     dependency in environment.packages)
-                    or dependency in self):
-                    continue
-                elif dependency in build_formulas:
-                    build_formulas.append(build_formula)
-                    dependency_in_formulas = True
+                if dependency in formulas:
+                    formulas.append(formula)
+                    build_later = True
                     LOGGER.debug('Delaying build of %s because it requires '
                                  '%s which will be built later' %
-                                 (build_formula, dependency))
+                                 (formula, dependency))
                     break
+
+                # If the dependency is installed in the environment or present
+                # in this repository, it is satisfied.
+                if ((environment is not None and
+                     dependency in environment.packages)
+                    or dependency in repo_packages
+                    or dependency in built_packages):
+                    continue
+
                 else:
-                    raise IpkgException('Missing dependency: %s' % dependency)
+                    LOGGER.error('Cannot build %s: Missing dependency: %s' %
+                                 (formula, dependency))
+                    break
 
-            if dependency_in_formulas:
-                continue
+            if not build_later:
 
-            try:
-                package_file = self.build_formula(formula)
+                try:
+                    package_file = self.build_formula(formula)
 
-            except IpkgException as err:
-                LOGGER.exception('Failed to build %s: %s'
-                                 % (spec, str(err)))
+                except IpkgException as err:
+                    LOGGER.exception('Failed to build %s: %s' %
+                                     (make_package_spec(formula), str(err)))
 
-            else:
-                new_packages.append(package_file)
+                else:
+                    built_packages.append(package_file)
 
-        return new_packages
+        return built_packages
 
     def __add_package(self, name, version, revision, filepath):
         """Add a package to the repository.
@@ -260,7 +252,10 @@ class LocalPackageRepository(PackageRepository):
 
         LOGGER.debug('sha256: %s', checksum)
 
-        meta[name][version][revision] = {'checksum': checksum}
+        package_meta = dict(PackageFile(filepath).meta)
+        package_meta['checksum'] = checksum
+
+        meta[name][version][revision] = package_meta
 
         LOGGER.info('Package %s added to repository', spec)
 
@@ -281,4 +276,6 @@ class FormulaRepository(object):
                 if FORMULA_FILE_RE.match(formula_file):
                     formula_filepath = os.path.join(name_dir, formula_file)
                     formulas.append(Formula.from_file(formula_filepath))
+                #else:
+                #    LOGGER.warning('Ignoring formula: %r', formula_file)
         return iter(formulas)

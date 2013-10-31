@@ -12,7 +12,7 @@ import bz2
 import json
 
 from .exceptions import IpkgException
-from .packages import BasePackage, InstalledPackage, PackageFile
+from .packages import BasePackage, MetaPackage, PackageFile
 from .prefix_rewriters import rewrite_prefix
 from .utils import DictFile, execute, make_package_spec, mkdir
 from .compat import basestring
@@ -76,16 +76,15 @@ class Variable(object):
 
     def set(self, value):
         if isinstance(value, basestring):
-            self.__value = value
+            self.value = value
         else:
             raise InvalidVariableValue(self.name, value)
 
-    @property
-    def value(self):
-        return self.__value
-
     def __str__(self):
-        return "%s='%s'" % (self.name, self.value)
+        return str(self.value)
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, str(self))
 
 
 class ListVariable(Variable):
@@ -97,28 +96,27 @@ class ListVariable(Variable):
 
     def set(self, value):
         if value is None:
-            self.__paths = []
+            self.__list = []
         elif isinstance(value, basestring):
-            self.__paths = value.split(self.LIST_SEPARATOR)
+            self.__list = value.split(self.LIST_SEPARATOR)
         else:
             raise InvalidVariableValue(self.name, value)
 
-    def remove(self, path):
-        if path in self.__paths:
-            path_index = self.__paths.index(path)
-            self.__paths.pop(path_index)
+    def remove(self, item):
+        if item in self.__list:
+            item_index = self.__list.index(item)
+            self.__list.pop(item_index)
 
-    def insert(self, path, index=0):
-        self.remove(path)
-        self.__paths.insert(index, path)
+    def insert(self, item, index=0):
+        self.remove(item)
+        self.__list.insert(index, item)
 
-    def append(self, path):
-        self.remove(path)
-        self.__paths.append(path)
+    def append(self, item):
+        self.remove(item)
+        self.__list.append(item)
 
-    @property
-    def value(self):
-        return self.LIST_SEPARATOR.join(self.__paths)
+    def __str__(self):
+        return self.LIST_SEPARATOR.join(self.__list)
 
 
 class PathListVariable(ListVariable):
@@ -132,36 +130,46 @@ class PathListVariable(ListVariable):
 #    LIST_SEPARATOR = ' '
 
 
-class Environment(object):
-    """An ipkg environment.
+class EnvironmentDirectories(dict):
+    """Directories of an ipkg environment.
     """
+    def __init__(self, prefix):
+        self.__prefix = prefix
 
-    def __init__(self, prefix, default_variables=os.environ):
-        self.prefix = prefix
-
-        directories = dict((
-            ('env', self.prefix),
-            ('bin', os.path.join(prefix, 'bin')),
-            ('sbin', os.path.join(prefix, 'sbin')),
-            ('include', os.path.join(prefix, 'include')),
-            ('lib', os.path.join(prefix, 'lib')),
-            #('lib64', os.path.join(prefix, 'lib64')),
-            ('share', os.path.join(prefix, 'share')),
-            ('man', os.path.join(prefix, 'share', 'man')),
-            ('pkgconfig', os.path.join(prefix, 'lib', 'pkgconfig')),
-            #('pkgconfig_64', os.path.join(prefix, 'lib64', 'pkgconfig')),
-            ('tmp', os.path.join(prefix, 'tmp')),
+        self.update((
+            ('prefix',      prefix),
+            ('bin',         os.path.join(prefix, 'bin')),
+            ('sbin',        os.path.join(prefix, 'sbin')),
+            ('include',     os.path.join(prefix, 'include')),
+            ('lib',         os.path.join(prefix, 'lib')),
+            ('share',       os.path.join(prefix, 'share')),
+            ('man',         os.path.join(prefix, 'share', 'man')),
+            ('pkgconfig',   os.path.join(prefix, 'lib', 'pkgconfig')),
+            ('tmp',         os.path.join(prefix, 'tmp')),
         ))
-        self.directories = directories
 
-        if isinstance(default_variables, dict) or \
-           default_variables is os.environ:
-            default_variables = dict(default_variables)
+    def create(self, fail_if_it_exists=True):
+        """Create environment directories.
+        """
+        LOGGER.debug('Creating environment directories at %s', self.__prefix)
+        for directory in sorted(self.values()):
+            mkdir(directory, fail_if_it_exists)
+        LOGGER.debug('Environment directories %s created', self.__prefix)
+
+
+class EnvironmentVariables(dict):
+    """Environment variables of an ipkg environment.
+    """
+    def __init__(self, directories, defaults=os.environ):
+
+        if isinstance(defaults, dict) or \
+           defaults is os.environ:
+            defaults = dict(defaults)
         else:
-            default_variables = {}
-        
-        if 'MANPATH' not in default_variables:
-            default_variables['MANPATH'] = '/usr/share/man'
+            defaults = {}
+
+        if 'MANPATH' not in defaults:
+            defaults['MANPATH'] = '/usr/share/man'
 
         var_models = {
             PathListVariable: ['PATH', 'PKG_CONFIG_PATH',
@@ -176,38 +184,61 @@ class Environment(object):
         var_models[PathListVariable].append(dyn_lib_var_name)
 
         variables = {}
-        for baseclass, variable_names in var_models.items():
-            for variable in variable_names:
-                default = default_variables.get(variable)
-                variables[variable] = baseclass(variable, default)
+        for baseclass, names in var_models.items():
+            for name in names:
+                default = defaults.get(name)
+                variables[name] = baseclass(name, default)
 
-        for name, value in default_variables.items():
+        # Scan default variables for variables we don't have
+        for name, value in defaults.items():
             if name not in variables:
                 variables[name] = Variable(name, value)
 
         variables['IPKG_ENVIRONMENT'] = Variable('IPKG_ENVIRONMENT',
-                                                 self.prefix)
+                                                 directories['prefix'])
         variables['TMPDIR'] = Variable('TMPDIR', directories['tmp'])
         variables['HOME'] = Variable('HOME', os.environ.get('HOME', '/'))
-        ps1 = '(%s)\h:\w\$ ' % os.path.split(os.path.realpath(self.prefix))[1]
+        ps1 = '(%s)\h:\w\$ ' % os.path.split(os.path.realpath(directories['prefix']))[1]
         variables['PS1'] = Variable('PS1', ps1)
         variables['PATH'].insert(directories['bin'])
         variables['PATH'].insert(directories['sbin'])
         variables['C_INCLUDE_PATH'].insert(directories['include'])
-        #variables['LD_LIBRARY_PATH'].insert(directories['lib64'])
         variables[dyn_lib_var_name].insert(directories['lib'])
         variables['MANPATH'].insert(directories['man'])
-        #variables['PKG_CONFIG_PATH'].insert(directories['pkgconfig_64'])
         variables['PKG_CONFIG_PATH'].insert(directories['pkgconfig'])
-        #variables['LDFLAGS'].insert('-L%s' % directories['lib64'])
         #variables['LDFLAGS'].insert('-L%s' % directories['lib'])
         #variables['CFLAGS'].insert('-I%s' % directories['include'])
         #variables['CXXFLAGS'].insert('-I%s' % directories['include'])
-        self.variables = variables
+
+        self.update(variables)
+        
+    def as_string_dict(self):
+        result = {}
+        for name, value in self.items():
+            result[name] = str(value)
+        return result
+
+    def as_string(self, export=False):
+        return '\n'.join('%s%s=%s' % ('export ' if export else '', n, v)
+                         for n, v in self.items()) + '\n'
+
+    def __str__(self):
+        return self.as_string()
+
+
+class Environment(object):
+    """An ipkg environment.
+    """
+
+    def __init__(self, prefix, directories=None, variables=None):
+        self.prefix = prefix
+        self.directories = directories or EnvironmentDirectories(prefix)
+        self.variables = variables or EnvironmentVariables(self.directories)
 
         # Load environment meta data
         meta_path = os.path.join(prefix, '.ipkg.meta')
         self.meta = DictFile(meta_path)
+
         # If packages are already installed,
         # add their custom environment variables
         if 'packages' in self.meta:
@@ -217,37 +248,16 @@ class Environment(object):
         else:
             self.meta['packages'] = {}
 
-    def __str__(self):
-        return self.variables_string()
-
     def __repr__(self):
         return 'Environment("%s")' % self.prefix
-
-    def variables_dict(self):
-        result = {}
-        for k, v in self.variables.items():
-            result[k] = v.value
-        return result
-
-    def variables_string(self, export=False):
-        return '\n'.join('%s%s' % ('export ' if export else '', var)
-                         for var in self.variables.values()) + '\n'
 
     def execute(self, command,
                 stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr,
                 cwd=None, data=None):
         """Execute a command in the environment.
         """
-        env_dict = self.variables_dict()
-        return execute(command, stdin, stdout, stderr, cwd, data, env_dict)
-
-    def create_directories(self, fail_if_it_exist=True):
-        """Create ipkg environment directories.
-        """
-        LOGGER.debug('Creating environment directories at %s', self.prefix)
-        for directory in self.directories.values():
-            mkdir(directory, fail_if_it_exist)
-        LOGGER.debug('Environment directories %s created', self.prefix)
+        return execute(command, stdin, stdout, stderr, cwd, data,
+                       self.variables.as_string_dict())
 
     def mktmpdir(self, prefix=None):
         """Create a temporary directory.
@@ -368,17 +378,15 @@ class Environment(object):
         """Load package custom environment variables."""
         if isinstance(envvars, dict):
             for name, value in envvars.items():
-                value = self.render_arg(value)
+                try:
+                    value = value % self.directories
+                except KeyError:
+                    # invalid format string ?
+                    pass
+
                 LOGGER.debug('Adding variable %s=%s', name, value)
                 self.variables[name] = Variable(name, value)
 
     @property
     def packages(self):
-        return map(InstalledPackage, self.meta['packages'].values())
-
-    def render_arg(self, arg):
-        """Render a string, replacing environment directories path."""
-        dirs = {}
-        for k, v in self.directories.items():
-            dirs[k + '_dir'] = v
-        return arg % dirs
+        return map(MetaPackage, self.meta['packages'].values())

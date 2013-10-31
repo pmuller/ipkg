@@ -180,10 +180,10 @@ def uninstall(environment, package):
              metavar='ENV', type=Environment,
              help='Path of the environment.'),
 )
-def mkenv(env):
+def mkenv(environment):
     """Create an environment.
     """
-    environment.create_directories()
+    environment.directories.create()
 
 
 @ipkg.command(
@@ -196,7 +196,7 @@ def mkenv(env):
 def printenv(environment, export):
     """Show the environment variables of an ipkg environment.
     """
-    sys.stdout.write(environment.variables_string(export))
+    sys.stdout.write(environment.variables.as_string(export))
 
 
 @ipkg.command(
@@ -225,9 +225,7 @@ def execute(environment, command, arguments):
 )
 def shell(environment, shell):
     """Launch an interactive shell."""
-    arguments = shell.split()
-    shell = arguments.pop(0)
-    environment.execute(shell, arguments)
+    environment.execute(shell)
 
 
 @ipkg.command(

@@ -41,11 +41,12 @@ class BasePackage(NameVersionRevisionComparable):
             raise UnknownMeta(attr)
 
 
-class InstalledPackage(BasePackage):
-    """A package which is already installed.
+class MetaPackage(BasePackage):
+    """A package which is already installed or present in a repository.
+       It's not a real file, just (possible part of) its meta data.
     """
     def __init__(self, meta):
-        super(InstalledPackage, self). __init__()
+        super(MetaPackage, self).__init__()
         self.meta = meta
 
     def __repr__(self):

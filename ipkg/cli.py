@@ -316,5 +316,32 @@ def build_repository(environment, verbose,
         LOGGER.info('Repository is up to date')
 
 
+@ipkg.command(
+    'config:get',
+    Argument('--environment', '-e',
+             metavar='ENV', type=Environment,
+             help='Path of the environment.'),
+    Argument('key'),
+)
+def config_get(environment, key):
+    """Set an environment configuration option.
+    """
+    print environment.get_config(key)
+
+
+@ipkg.command(
+    'config:set',
+    Argument('--environment', '-e',
+             metavar='ENV', type=Environment,
+             help='Path of the environment.'),
+    Argument('key'),
+    Argument('value'),
+)
+def config_set(environment, key, value):
+    """Set an environment configuration option.
+    """
+    environment.set_config(key, value)
+
+
 if __name__ == '__main__':
     ipkg()

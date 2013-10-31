@@ -248,6 +248,9 @@ class Environment(object):
         else:
             self.meta['packages'] = {}
 
+        if 'config' not in self.meta:
+            self.meta['config'] = {}
+
     def __repr__(self):
         return 'Environment("%s")' % self.prefix
 
@@ -390,3 +393,10 @@ class Environment(object):
     @property
     def packages(self):
         return map(MetaPackage, self.meta['packages'].values())
+
+    def get_config(self, key):
+        return self.meta['config'].get(key)
+
+    def set_config(self, key, value):
+        self.meta['config'][key] = value
+        self.meta.save()

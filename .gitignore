@@ -39,3 +39,6 @@ nosetests.xml
 
 # Python coverage
 cover
+
+# Ignore ipkg cache directory
+cache/

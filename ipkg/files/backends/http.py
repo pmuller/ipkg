@@ -8,6 +8,7 @@ except ImportError: # Python 3
 import requests
 
 from . import BaseFile, BackendException
+from .. import cache
 
 
 LOGGER = logging.getLogger(__name__)
@@ -43,12 +44,20 @@ class HttpFile(BaseFile):
                     break
             
             content.seek(0)
+
+            if cache.is_active():
+                cache.set(self.name, content.read())
+                content.seek(0)
+
             self.__file = content
             LOGGER.info('Downloaded: %s', self.name)
 
     def __get_file(self):
         if self.__file is None:
-            self.__download()
+            if cache.has(self.name):
+                self.__file = cache.get(self.name)
+            else:
+                self.__download()
         return self.__file
 
     def seek(self, *args):

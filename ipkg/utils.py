@@ -25,7 +25,8 @@ class ExecutionFailed(IpkgException):
         self.reason = reason
 
     def __str__(self):
-        return 'Cannot execute %s: %s' % (' '.join(self.command), self.reason)
+        return 'Command "%s" failed: %s' % (
+            ' '.join(self.command), self.reason)
 
 
 class InvalidPackage(IpkgException):
@@ -134,12 +135,12 @@ def execute(command,
             error = 'Command not found'
         else:
             error = exception.strerror
-        raise ExecutionFailed(command, error)
+        raise ExecutionFailed(command_, error)
 
     stdout_str, stderr_str = process.communicate(data)
 
     if process.returncode != 0:
-        raise ExecutionFailed(command,
+        raise ExecutionFailed(command_,
                               'exited with code %i' % process.returncode)
 
     if hasattr(stdout_str, 'decode'):

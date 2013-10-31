@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 setup(
     name='ipkg',
     version='0.9.0',
-    description='Simple package management',
+    description='Package management for humans',
     author='Philippe Muller',
     url='http://ipkg.org',
     license='MIT',
@@ -25,22 +25,22 @@ setup(
         http=ipkg.files.backends.http:HttpFile
         https=ipkg.files.backends.http:HttpFile
     """,
-    classifiers="""
-        Development Status :: 3 - Alpha
-        Environment :: Console
-        Intended Audience :: Developers
-        Intended Audience :: System Administrators
-        License :: OSI Approved :: MIT License
-        Operating System :: MacOS :: MacOS X
-        Operating System :: POSIX :: Linux
-        Programming Language :: Python :: 2.6
-        Programming Language :: Python :: 2.7
-        Programming Language :: Python :: 3.2
-        Programming Language :: Python :: 3.3
-        Programming Language :: Python :: Implementation :: PyPy
-        Topic :: Software Development
-        Topic :: System :: Installation/Setup
-        Topic :: System :: Software Distribution
-        Topic :: Utilities
-    """
+    classifiers=(
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: Implementation :: PyPy',
+        'Topic :: Software Development',
+        'Topic :: System :: Installation/Setup',
+        'Topic :: System :: Software Distribution',
+        'Topic :: Utilities',
+    ),
 )

@@ -9,6 +9,7 @@ from . import packages, repositories
 from .environments import current, Environment
 from .exceptions import IpkgException
 from .build import Formula
+from .files import vopen
 
 
 LOGGER = logging.getLogger(__name__)
@@ -176,14 +177,24 @@ def uninstall(environment, package):
 
 
 @ipkg.command(
+    Argument('--repository', '-r',
+             metavar='URL', type=repositories.PackageRepository,
+             help='Package repository to use when installing requirements.'),
+    Argument('--requirements', '-R',
+             type=vopen,
+             help='Requirements file.'),
     Argument('environment',
              metavar='ENV', type=Environment,
              help='Path of the environment.'),
 )
-def mkenv(environment):
+def mkenv(environment, repository, requirements):
     """Create an environment.
     """
     environment.directories.create()
+
+    if requirements:
+        for requirement in requirements.read().splitlines():
+            environment.install(requirement, repository)
 
 
 @ipkg.command(

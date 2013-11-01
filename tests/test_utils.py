@@ -1,20 +1,31 @@
 from unittest import TestCase
 from tempfile import mkdtemp
 from shutil import rmtree
-from os.path import join
+from os.path import join, dirname
+from os import listdir
 import json
 
-from ipkg.utils import *
+from ipkg.utils import DictFile, execute, make_package_spec, InvalidPackage, \
+    PIPE, ExecutionFailed, InvalidDictFileContent, unarchive
 
 
-class TestDictFile(TestCase):
+DATA_DIR = join(dirname(__file__), 'data')
+
+
+class TempDirTest(TestCase):
 
     def setUp(self):
         self.tmpdir = mkdtemp()
-        self.filepath = join(self.tmpdir, 'foo.json')
 
     def tearDown(self):
         rmtree(self.tmpdir)
+
+
+class TestDictFile(TempDirTest):
+
+    def setUp(self):
+        TempDirTest.setUp(self)
+        self.filepath = join(self.tmpdir, 'foo.json')
 
     def test_not_existing(self):
         self.assertEqual(DictFile(self.filepath), {})
@@ -108,3 +119,27 @@ class TestMakePackageSpec(TestCase):
 
     def test_bad_obj_type(self):
         self.assertRaises(InvalidPackage, make_package_spec, None)
+
+
+class TestUnarchive(TempDirTest):
+
+    DATA_BASE = 'foo-1.0'
+
+    def test_tar_gz(self):
+        self._test('.tar.gz')
+
+    def test_tar_bz2(self):
+        self._test('.tar.bz2')
+
+    def test_zip(self):
+        self._test('.zip')
+
+    def _test(self, extension):
+        f = open(join(DATA_DIR, self.DATA_BASE + extension))
+        unarchive(f, self.tmpdir)
+        dirlist = listdir(self.tmpdir)
+        self.assertEqual(len(dirlist), 1)
+        self.assertEqual(dirlist[0], self.DATA_BASE)
+        self.assertEqual(
+            open(join(self.tmpdir, self.DATA_BASE, 'README')).read(),
+            open(join(DATA_DIR, self.DATA_BASE, 'README')).read())

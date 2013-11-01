@@ -55,6 +55,7 @@ class Formula(NameVersionRevisionComparable):
     dependencies = tuple()
     homepage = None
     envvars = None
+    build_envvars = None
     """Arguments passed to ``./configure``"""
     configure_args = ['--prefix=%(prefix)s']
 
@@ -131,6 +132,9 @@ class Formula(NameVersionRevisionComparable):
             prefix = os.path.join(build_dir, 'environment')
             self.environment = Environment(prefix)
             self.environment.directories.create()
+
+        if self.build_envvars:
+            self.environment.variables.add(self.build_envvars)
 
         env_prefix = self.environment.prefix
 

@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ipkg',
-    version='0.9.0',
+    version='0.10.0',
     description='Package management for humans',
     author='Philippe Muller',
     url='http://ipkg.org',

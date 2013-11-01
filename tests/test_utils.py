@@ -6,7 +6,7 @@ from os import listdir
 import json
 
 from ipkg.utils import DictFile, execute, make_package_spec, InvalidPackage, \
-    PIPE, ExecutionFailed, InvalidDictFileContent, unarchive
+    PIPE, ExecutionFailed, InvalidDictFileContent, unarchive, which
 
 
 DATA_DIR = join(dirname(__file__), 'data')
@@ -119,6 +119,12 @@ class TestMakePackageSpec(TestCase):
 
     def test_bad_obj_type(self):
         self.assertRaises(InvalidPackage, make_package_spec, None)
+
+
+class TestWhich(TestCase):
+
+    def test(self):
+        self.assertEqual(which('ls'), '/bin/ls')
 
 
 class TestUnarchive(TempDirTest):

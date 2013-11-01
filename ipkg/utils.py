@@ -191,6 +191,15 @@ def parse_package_spec(spec):
         raise InvalidPackage(spec)
 
 
+def which(command):
+    """Find a command in ``$PATH``.
+    """
+    for directory in os.environ['PATH'].split(':'):
+        path = os.path.join(directory, command)
+        if os.path.exists(path) and os.path.isfile(path):
+            return path
+
+
 def unarchive(fileobj, target):
     LOGGER.debug('unarchive(%r, %r)', fileobj, target)
 

@@ -118,7 +118,7 @@ def execute(command,
         if stdin:
             kw['stdin'] = stdin
     else:
-        data = data.encode('UTF-8') # Python 3 compat
+        #data = data.encode('UTF-8') # Python 3 compat
         kw['stdin'] = PIPE
 
     # If command is a string, split it to get a format that Popen understands
@@ -143,10 +143,10 @@ def execute(command,
         raise ExecutionFailed(command_,
                               'exited with code %i' % process.returncode)
 
-    if hasattr(stdout_str, 'decode'):
-        stdout_str = stdout_str.decode('UTF-8')
-    if hasattr(stderr_str, 'decode'):
-        stderr_str = stderr_str.decode('UTF-8')
+    #if hasattr(stdout_str, 'decode'):
+    #    stdout_str = stdout_str.decode('UTF-8')
+    #if hasattr(stderr_str, 'decode'):
+    #    stderr_str = stderr_str.decode('UTF-8')
 
     return stdout_str, stderr_str
 

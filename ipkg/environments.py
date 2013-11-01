@@ -236,7 +236,6 @@ class EnvironmentVariables(dict):
             variables = {name: value}
 
         for var_name, var_value in variables.items():
-            print var_name, var_value
             try:
                 var_value = var_value % self.__directories
             except KeyError:

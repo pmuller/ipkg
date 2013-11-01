@@ -162,6 +162,8 @@ class EnvironmentVariables(dict):
     """
     def __init__(self, directories, defaults=os.environ):
 
+        self.__directories = directories
+
         if isinstance(defaults, dict) or \
            defaults is os.environ:
             defaults = dict(defaults)
@@ -225,6 +227,25 @@ class EnvironmentVariables(dict):
     def __str__(self):
         return self.as_string()
 
+    def add(self, name, value=None):
+        """Add an environment variable.
+        """
+        if isinstance(name, dict):
+            variables = name
+        else:
+            variables = {name: value}
+
+        for var_name, var_value in variables.items():
+            print var_name, var_value
+            try:
+                var_value = var_value % self.__directories
+            except KeyError:
+                # invalid format string ?
+                pass
+
+            LOGGER.debug('Adding variable %s=%s', var_name, var_value)
+            self[var_name] = Variable(var_name, var_value)
+
 
 class Environment(object):
     """An ipkg environment.
@@ -243,8 +264,8 @@ class Environment(object):
         # add their custom environment variables
         if 'packages' in self.meta:
             for name, data in self.meta['packages'].items():
-                if 'envvars' in data:
-                    self.__add_package_envvars(data['envvars'])
+                if 'envvars' in data and data['envvars'] is not None:
+                    self.variables.add(data['envvars'])
         else:
             self.meta['packages'] = {}
 
@@ -372,23 +393,10 @@ class Environment(object):
         self.meta.save()
 
         # Load package custom environment variables
-        if hasattr(package, 'envvars'):
-            self.__add_package_envvars(package.envvars)
+        if package.envvars is not None:
+            self.variables.add(package.envvars)
 
         LOGGER.info('Package %s installed', make_package_spec(package))
-
-    def __add_package_envvars(self, envvars):
-        """Load package custom environment variables."""
-        if isinstance(envvars, dict):
-            for name, value in envvars.items():
-                try:
-                    value = value % self.directories
-                except KeyError:
-                    # invalid format string ?
-                    pass
-
-                LOGGER.debug('Adding variable %s=%s', name, value)
-                self.variables[name] = Variable(name, value)
 
     @property
     def packages(self):

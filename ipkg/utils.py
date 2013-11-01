@@ -9,7 +9,7 @@ import errno
 
 from .files import vopen
 from .exceptions import IpkgException
-from .compat import basestring
+from .compat import basestring, StringIO
 from .regex import PACKAGE_SPEC
 
 
@@ -201,20 +201,35 @@ def which(command):
 
 
 def unarchive(fileobj, target):
+    """Extract an archive, detecting its format.
+
+    Supports: tar.bz2, tar.gz, tar.xz, zip
+    """
     LOGGER.debug('unarchive(%r, %r)', fileobj, target)
 
-    if fileobj.name.endswith('.tar.gz') or \
-       fileobj.name.endswith('.tar.bz2'):
+    filename = fileobj.name
+
+    # Since tarfile cannot handle xz archives,
+    # we first use the xz tool to uncompress it
+    if filename.endswith('.tar.xz'):
+        xz = which('xz')
+        if not xz:
+            raise IpkgException('Cannot find the xz tool')
+        fileobj = StringIO(
+            execute('xz -d -c', data=fileobj.read(), stdout=PIPE)[0])
+
+    if filename.split('.')[-2:] in (
+        ['tar', 'bz2'], ['tar', 'gz'], ['tar', 'xz']):
         archive = tarfile.open(fileobj=fileobj)
         root_items = set(i.path.split('/')[0] for i in archive)
 
-    elif fileobj.name.endswith('.zip'):
+    elif filename.endswith('.zip'):
         archive = zipfile.ZipFile(fileobj)
         root_items = set(i.filename.split('/')[0] for i in
                          archive.filelist)
 
     else:
-        raise IpkgException('Unrecognized file type %s' % fileobj.name)
+        raise IpkgException('Unrecognized file type %s' % filename)
 
     if len(root_items) != 1:
         raise IpkgException('There must be strictly 1 item at '

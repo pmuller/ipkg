@@ -137,6 +137,9 @@ class TestUnarchive(TempDirTest):
     def test_tar_bz2(self):
         self._test('.tar.bz2')
 
+    def test_tar_xz(self):
+        self._test('.tar.xz')
+
     def test_zip(self):
         self._test('.zip')
 

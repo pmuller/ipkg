@@ -6,6 +6,7 @@ import subprocess
 import tarfile
 import zipfile
 import errno
+import shlex
 
 from .files import vopen
 from .exceptions import IpkgException
@@ -123,7 +124,7 @@ def execute(command,
 
     # If command is a string, split it to get a format that Popen understands
     if isinstance(command, basestring):
-        command_ = command.split()
+        command_ = shlex.split(command)
     else:
         command_ = command
 

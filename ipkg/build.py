@@ -50,7 +50,7 @@ class Formula(NameVersionRevisionComparable):
     """
     name = None
     version = None
-    revision = None
+    revision = 1
     sources = None
     patches = tuple()
     dependencies = tuple()

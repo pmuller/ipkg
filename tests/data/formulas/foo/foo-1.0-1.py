@@ -7,7 +7,6 @@ class foo(Formula):
 
     name = 'foo'
     version = '1.0'
-    revision = 1
     sources = File(dirname(__file__) + '/../../sources/foo-1.0.tar.gz')
 
     def install(self):

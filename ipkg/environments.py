@@ -16,6 +16,7 @@ from .packages import BasePackage, MetaPackage, PackageFile
 from .prefix_rewriters import rewrite_prefix
 from .utils import DictFile, execute, make_package_spec, mkdir
 from .compat import basestring
+from .files.exceptions import FilesException
 from . import platform
 
 
@@ -330,11 +331,11 @@ class Environment(object):
         LOGGER.info('Installing %s', package)
 
         if isinstance(package, basestring):
-            if os.path.exists(package):
-                # If package is a string and exists on the filesystem,
-                # use it
+
+            try:
                 package = PackageFile(package)
-            else:
+
+            except FilesException:
                 # If it does not exist, and this environment has a repository,
                 # try to find it using the repository.
                 if repository is None:

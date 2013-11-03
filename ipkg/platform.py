@@ -15,6 +15,7 @@ system = pf.system()
 
 if system == 'Linux':
     NAME, RELEASE, _ = pf.dist()
+    NAME = NAME.lower()
 elif system == 'Darwin':
     NAME = 'osx'
     RELEASE = pf.mac_ver()[0]

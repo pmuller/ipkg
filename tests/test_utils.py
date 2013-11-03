@@ -9,7 +9,7 @@ from ipkg.utils import DictFile, execute, make_package_spec, InvalidPackage, \
     PIPE, ExecutionFailed, InvalidDictFileContent, unarchive, which
 
 
-DATA_DIR = join(dirname(__file__), 'data')
+DATA_DIR = join(dirname(__file__), 'data', 'sources')
 
 
 class TempDirTest(TestCase):

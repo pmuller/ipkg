@@ -1,3 +1,5 @@
+import os
+
 try:
     from urlparse import urlparse
 except ImportError: # Python 3
@@ -16,7 +18,10 @@ class LocalFile(BaseFile):
     def __init__(self, *args, **kw):
         super(LocalFile, self).__init__(*args, **kw)
         filepath = urlparse(self.name).path
-        self.__file = open(filepath)
+        if os.path.isfile(filepath):
+            self.__file = open(filepath)
+        else:
+            raise LocalFileException('Not a file: %s' % filepath)
 
     def seek(self, *args):
         self.__file.seek(*args)

@@ -7,6 +7,7 @@ import hashlib
 import time
 import tarfile
 import json
+from types import ModuleType
 
 from .environments import Environment
 from .exceptions import IpkgException
@@ -257,6 +258,13 @@ class Formula(NameVersionRevisionComparable):
         globals_ = {'Formula': cls, 'File': File, 'platform': platform}
         locals_ = {}
 
+        filepath = os.path.abspath(filepath)
+        filename = os.path.basename(filepath)
+        module_name = filename.split('.py')[0].replace('.', '_')
+        module = ModuleType(module_name)
+        module.__file__ = filepath
+        sys.modules[module_name] = module
+
         with open(filepath) as bf:
             exec bf.read() in globals_, locals_
 
@@ -268,6 +276,7 @@ class Formula(NameVersionRevisionComparable):
                 pass
             else:
                 if is_formula:
+                    obj.__module__ = module_name
                     formula_classes.append(obj)
 
         if formula_classes:
@@ -277,6 +286,8 @@ class Formula(NameVersionRevisionComparable):
                 formula_class = formula_classes[0]
         else:
             raise IpkgException('No Formula class found')
+
+        setattr(module, formula_class.__name__, formula_class)
 
         return formula_class
 

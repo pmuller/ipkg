@@ -7,7 +7,7 @@ import hashlib
 import time
 import tarfile
 import json
-from types import ModuleType
+import imp
 
 from .environments import Environment
 from .exceptions import IpkgException
@@ -255,28 +255,26 @@ class Formula(NameVersionRevisionComparable):
         """
         #LOGGER.debug('%s.from_file("%s")', cls.__name__, filepath)
 
-        globals_ = {'Formula': cls, 'File': File, 'platform': platform}
-        locals_ = {}
+        if not os.path.exists(filepath):
+            raise IpkgException('Formula not found: %s' % filepath)
 
         filepath = os.path.abspath(filepath)
         filename = os.path.basename(filepath)
         module_name = filename.split('.py')[0].replace('.', '_')
-        module = ModuleType(module_name)
-        module.__file__ = filepath
-        sys.modules[module_name] = module
 
-        with open(filepath) as bf:
-            exec bf.read() in globals_, locals_
+        module = imp.load_source(module_name, filepath)
 
         formula_classes = []
-        for obj in locals_.values():
+        for attr in dir(module):
+            if attr.startswith('_'):
+                continue
+            obj = getattr(module, attr)
             try:
-                is_formula = issubclass(obj, Formula)
+                is_formula_cls = issubclass(obj, Formula)
             except TypeError:
                 pass
             else:
-                if is_formula:
-                    obj.__module__ = module_name
+                if is_formula_cls and obj is not Formula:
                     formula_classes.append(obj)
 
         if formula_classes:

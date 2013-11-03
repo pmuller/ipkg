@@ -331,6 +331,10 @@ class Environment(object):
         """
         LOGGER.info('Installing %s', package)
 
+        os_name = os_name or platform.NAME
+        os_release = os_release or platform.RELEASE
+        arch = arch or platform.ARCHITECTURE
+
         if isinstance(package, basestring):
 
             try:
@@ -342,9 +346,6 @@ class Environment(object):
                 if repository is None:
                     raise IpkgException('Cannot find package %s' % package)
                 else:
-                    os_name = os_name or platform.NAME
-                    os_release = os_release or platform.RELEASE
-                    arch = arch or platform.ARCHITECTURE
                     package = repository.find(package, os_name=os_name,
                                               os_release=os_release,
                                               arch=arch)
@@ -374,7 +375,8 @@ class Environment(object):
             for dependency in package.dependencies:
                 if dependency not in self.meta['packages']:
                     LOGGER.info('Installing dependency: %s', dependency)
-                    self.install(dependency, repository)
+                    self.install(dependency, repository,
+                                 os_name, os_release, arch)
 
         package.extract(self.prefix)
 

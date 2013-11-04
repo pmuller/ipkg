@@ -70,8 +70,6 @@ class Formula(NameVersionRevisionComparable):
         self.environment = environment
         self.verbose = verbose
         self.log = log or logging.getLogger(__name__ )
-        self.commands = {}
-        self.__command_id = 0
         self.__cwd = os.getcwd()
 
     def run_command(self, command, data=None, cwd=None):
@@ -84,22 +82,8 @@ class Formula(NameVersionRevisionComparable):
         else:
             stdout = stderr = open(os.devnull, 'w')
 
-        start = time.time()
-        exit_code = self.environment.execute(command,
-                                             stdout=stdout, stderr=stderr,
-                                             cwd=cwd or self.__cwd, data=data),
-
-        report = {
-            'command': command,
-            'start': start,
-            'end': time.time(),
-            'exit_code': exit_code,
-            'cwd': cwd,
-        }
-
-        self.commands[self.__command_id] = report
-        self.__command_id += 1
-        return report
+        return self.environment.execute(command, stdout=stdout, stderr=stderr,
+                                        cwd=cwd or self.__cwd, data=data),
 
     def run_configure(self):
         command = ['./configure']

@@ -98,7 +98,7 @@ class TestExecute(TestCase):
 
 class TestMakePackageSpec(TestCase):
 
-    SAMPLE = {'name': 'foo', 'version' : '1.0', 'revision': 1}
+    SAMPLE = {'name': 'foo', 'version': '1.0', 'revision': 1}
 
     def test_package_like_obj(self):
         obj = type('foo', (object,), self.SAMPLE)()

@@ -6,7 +6,7 @@ from unittest import TestCase
 import json
 
 from ipkg.repositories import PackageRepository, LocalPackageRepository, \
-        FormulaRepository
+    FormulaRepository
 from ipkg.build import Formula
 
 

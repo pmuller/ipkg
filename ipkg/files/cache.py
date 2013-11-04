@@ -32,7 +32,7 @@ def is_active():
     else:
         return True
 
-    
+
 def get_cache_filepath(name):
     filename = sha256(name).hexdigest()
     return path.join(get_cache_dir(), filename)

@@ -15,8 +15,8 @@ class NameVersionRevisionComparable(object):
 
         if is_package_like(other):
             return self.name == other.name and \
-                   self.version == other.version and \
-                   str(self.revision) == str(other.revision)
+                self.version == other.version and \
+                str(self.revision) == str(other.revision)
 
         elif isinstance(other, basestring):
             spec = parse_package_spec(other)

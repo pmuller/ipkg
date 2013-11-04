@@ -18,7 +18,7 @@ def rewrite_prefix(package_file, build_prefix, install_prefix):
 
     elif LIBTOOL_FILE.match(package_file):
         rewrite_libtool(file_path, build_prefix, install_prefix)
-    
+
     else:
         with open(file_path) as f:
             first_bytes = f.read(4)
@@ -34,7 +34,8 @@ def rewrite_prefix(package_file, build_prefix, install_prefix):
             #             'cannot detect file type', file_path)
 
 
-def rewrite_text_first_match(file_path, line_start, build_prefix, install_prefix):
+def rewrite_text_first_match(file_path, line_start, build_prefix,
+                             install_prefix):
     """Rewrite the prefix. Only apply to the first line starting with
        ``line_start``.
     """

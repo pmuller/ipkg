@@ -69,7 +69,7 @@ class Formula(NameVersionRevisionComparable):
 
         self.environment = environment
         self.verbose = verbose
-        self.log = log or logging.getLogger(__name__ )
+        self.log = log or logging.getLogger(__name__)
         self.__cwd = os.getcwd()
 
     def run_command(self, command, data=None, cwd=None):
@@ -94,6 +94,7 @@ class Formula(NameVersionRevisionComparable):
     def __getattr__(self, attr):
         if attr.startswith('run_'):
             command = [attr.split('_', 1)[1]]
+
             def func(args=None, **kw):
                 if args:
                     if isinstance(args, basestring):
@@ -107,7 +108,8 @@ class Formula(NameVersionRevisionComparable):
     def build(self, package_dir, remove_build_dir=True, repository=None,
               os_name=None, os_release=None, arch=None):
         """Build the formula."""
-        LOGGER.debug('%r.build(package_dir=%s, remove_build_dir=%s)', self, package_dir, remove_build_dir)
+        LOGGER.debug('%r.build(package_dir=%s, remove_build_dir=%s)',
+                     self, package_dir, remove_build_dir)
 
         installed_dependencies = []
         build_dir = tempfile.mkdtemp(prefix='ipkg-build-')
@@ -138,7 +140,7 @@ class Formula(NameVersionRevisionComparable):
         self.src_root = src_root = os.path.join(build_dir, 'sources')
         mkdir(src_root, False)
 
-        # Unarchive the sources file and store the sources directory as cwd 
+        # Unarchive the sources file and store the sources directory as cwd
         # for use when running commands from now
         self.__cwd = self.unarchive(self.sources)
 

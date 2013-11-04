@@ -38,7 +38,7 @@ class HttpFile(BaseFile):
                     content.write(data)
                 else:
                     break
-            
+
             content.seek(0)
 
             if cache.is_active():

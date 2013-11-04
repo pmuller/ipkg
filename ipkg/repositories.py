@@ -16,7 +16,6 @@ from .regex import FORMULA_FILE
 LOGGER = logging.getLogger(__name__)
 
 
-
 class PackageRepository(object):
 
     META_FILE_NAME = 'repository.json'
@@ -47,7 +46,7 @@ class PackageRepository(object):
         elif revision is not None and revision not in meta[name][version]:
             raise IpkgException('Package %s version %s revision %s not found' %
                                 (name, version, revision))
-        
+
         if version is None or revision is None:
             version, revision = self.__find_latest(name, version)
 
@@ -56,13 +55,13 @@ class PackageRepository(object):
         return PackageFile(os.path.join(self.base, filepath))
 
     def __find_latest(self, name, version=None):
-        
+
         def compare(a, b):
             if a < b:
                 return -1
             elif a == b:
                 return 0
-            else: # a > b
+            else:  # a > b
                 return 1
 
         if version is None:
@@ -154,8 +153,8 @@ class LocalPackageRepository(PackageRepository):
                        environment=None, verbose=False):
         """Build all formulas and store them in this repository.
         """
-        formulas = [] # formulas not already built 
-        built_packages = [] # new packages
+        formulas = []  # formulas not already built
+        built_packages = []  # new packages
 
         LOGGER.debug('Building repository packages list...')
         repo_packages = list(self)
@@ -183,8 +182,8 @@ class LocalPackageRepository(PackageRepository):
                 # in this repository, it is satisfied.
                 if ((environment is not None and
                      dependency in environment.packages)
-                    or dependency in repo_packages
-                    or dependency in built_packages):
+                        or dependency in repo_packages
+                        or dependency in built_packages):
                     continue
 
                 else:
@@ -217,7 +216,7 @@ class LocalPackageRepository(PackageRepository):
             meta[name] = {}
         if version not in meta[name]:
             meta[name][version] = {}
-        
+
         hashobj = hashlib.sha256()
         with open(filepath) as f:
             hashobj.update(f.read())

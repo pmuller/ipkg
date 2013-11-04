@@ -201,8 +201,8 @@ class EnvironmentVariables(dict):
                                                  directories['prefix'])
         variables['TMPDIR'] = Variable('TMPDIR', directories['tmp'])
         variables['HOME'] = Variable('HOME', os.environ.get('HOME', '/'))
-        ps1 = '(%s)\h:\w\$ ' % os.path.split(os.path.realpath(directories['prefix']))[1]
-        variables['PS1'] = Variable('PS1', ps1)
+        shortname = os.path.split(os.path.realpath(directories['prefix']))[1]
+        variables['PS1'] = Variable('PS1', '(%s)\h:\w\$ ' % shortname)
         variables['PATH'].insert(directories['bin'])
         variables['PATH'].insert(directories['sbin'])
         variables['C_INCLUDE_PATH'].insert(directories['include'])
@@ -214,7 +214,7 @@ class EnvironmentVariables(dict):
         #variables['CXXFLAGS'].insert('-I%s' % directories['include'])
 
         self.update(variables)
-        
+
     def as_string_dict(self):
         result = {}
         for name, value in self.items():
@@ -370,7 +370,7 @@ class Environment(object):
                     self.uninstall(package)
                 break
 
-        # Install dependencies 
+        # Install dependencies
         if package.dependencies:
             for dependency in package.dependencies:
                 if dependency not in self.meta['packages']:

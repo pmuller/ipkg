@@ -82,7 +82,7 @@ class Ipkg(object):
         command_args = args
 
         # Used by commands without arguments
-        if type(arg_or_func) == types.FunctionType:
+        if isinstance(arg_or_func, types.FunctionType):
             func = arg_or_func
             cmd_parser = self.subparsers.add_parser(func.func_name,
                                                     help=func.__doc__)

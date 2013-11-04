@@ -157,8 +157,8 @@ def is_package_like(obj):
        attributes.
     """
     return hasattr(obj, 'name') and \
-           hasattr(obj, 'version') and \
-           hasattr(obj, 'revision')
+        hasattr(obj, 'version') and \
+        hasattr(obj, 'revision')
 
 
 def make_package_spec(obj):
@@ -219,8 +219,8 @@ def unarchive(fileobj, target):
         fileobj = StringIO(
             execute('xz -d -c', data=fileobj.read(), stdout=PIPE)[0])
 
-    if filename.split('.')[-2:] in (
-        ['tar', 'bz2'], ['tar', 'gz'], ['tar', 'xz']):
+    tar_extensions = (['tar', 'bz2'], ['tar', 'gz'], ['tar', 'xz'])
+    if filename.split('.')[-2:] in tar_extensions:
         archive = tarfile.open(fileobj=fileobj)
         root_items = set(i.path.split('/')[0] for i in archive)
 

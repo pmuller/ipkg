@@ -1,6 +1,6 @@
 try:
     from urlparse import urlparse
-except ImportError: # Python 3
+except ImportError:  # Python 3
     from urllib.parse import urlparse
 
 from pkg_resources import iter_entry_points

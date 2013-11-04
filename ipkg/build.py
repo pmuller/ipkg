@@ -37,8 +37,10 @@ class IncompleteFormula(BuildError):
 
 
 def find_files(base):
+    """Create a list of files in prefix ``base``.
+    """
     result = []
-    for parent, sub_dirs, files in os.walk(base):
+    for parent, _, files in os.walk(base):
         rel_dir = parent.split(base)[1][1:]
         for filename in files:
             result.append(os.path.join(rel_dir, filename))
@@ -57,7 +59,7 @@ class Formula(NameVersionRevisionComparable):
     homepage = None
     envvars = None
     build_envvars = None
-    """Arguments passed to ``./configure``"""
+    # Arguments passed to ``./configure``
     configure_args = ['--prefix=%(prefix)s']
 
     def __init__(self, environment=None, verbose=False, log=None):
@@ -70,9 +72,17 @@ class Formula(NameVersionRevisionComparable):
         self.environment = environment
         self.verbose = verbose
         self.log = log or logging.getLogger(__name__)
+        self.src_root = None
         self.__cwd = os.getcwd()
 
     def run_command(self, command, data=None, cwd=None):
+        """Run a ``command``.
+
+        ``command`` can be a string or a list.
+        If a ``data`` string is passed, it will be written on the standard
+        input.
+        If no ``cwd`` is given, the command will run in the sources directory.
+        """
         cmd = command if isinstance(command, basestring) else ' '.join(command)
         LOGGER.info('Running: %s', cmd)
 
@@ -86,6 +96,25 @@ class Formula(NameVersionRevisionComparable):
                                         cwd=cwd or self.__cwd, data=data),
 
     def run_configure(self):
+        """Run ``./configure``, using ``configure_args`` arguments.
+
+        ``configure_args`` arguments can be format strings, using directory
+        names.
+
+        For example::
+
+            >>> from ipkg.build import Formula
+            >>> class gdbm(Formula):
+            ...     name = 'gdbm'
+            ...     version = '1.10'
+            ...     sources = File('http://ftpmirror.gnu.org/gdbm/gdbm-1.10.tar.gz')
+            ...     configure_args = ('--prefix=%(prefix)s', '--mandir=%(man)s')
+            ... 
+
+        When building the gdbm formula, the configure script will be passed
+        the build prefix and the man directory inside it.
+
+        """
         command = ['./configure']
         directories = self.environment.directories
         command.extend(arg % directories for arg in self.configure_args)
@@ -96,6 +125,7 @@ class Formula(NameVersionRevisionComparable):
             command = [attr.split('_', 1)[1]]
 
             def func(args=None, **kw):
+                """Wrap calls to ``run_command``."""
                 if args:
                     if isinstance(args, basestring):
                         args = args.split()
@@ -184,11 +214,21 @@ class Formula(NameVersionRevisionComparable):
         return ipkg_file
 
     def install(self):
+        """Run ``./configure``, ``make`` and ``make install``.
+
+        If your package need a custom build process,
+        override this method in your formula.
+        Do whatever needed to build your code.
+        All new files found in the build environment prefix will be included
+        in the package.
+        """
         self.run_configure()
         self.run_make()
         self.run_make(['install'])
 
     def __create_package(self, files, build_dir, package_dir):
+        """Create a package.
+        """
         #LOGGER.debug('%r.__create_package(%r, %r, %r)',
         #             self, files, build_dir, package_dir)
 
@@ -283,7 +323,23 @@ class Formula(NameVersionRevisionComparable):
 
 
 class File(object):
+    """A build resource.
 
+    Use this class to reference a file in your formulas, for example::
+
+    .. code-block:: python
+
+       class Foo(Formula):
+           sources = File('http://foo.org/foo.tar.gz', sha256='42')
+
+    When build the Foo formula, its sources will be fetched from
+    ``http://foo.org/foo.tar.gz`` and its sha256 checksum will be
+    checked against the value ``42``
+    (this will fail for sure).
+
+    Supported checksum types: sha512, sha384, sha256, sha224, sha1 and md5.
+
+    """
     def __init__(self, url, **kw):
         if 'sha512' in kw:
             hash_class = hashlib.sha512
@@ -312,10 +368,15 @@ class File(object):
         self.expected_hash = expected_hash
 
     def open(self):
-        f = vopen(self.url, expected_hash=self.expected_hash,
-                  hash_class=self.hash_class)
-        f.verify_checksum()
-        return f
+        """Returns a file-like object.
+
+        Validate file checksum, if specified.
+
+        """
+        fileobj = vopen(self.url, expected_hash=self.expected_hash,
+                        hash_class=self.hash_class)
+        fileobj.verify_checksum()
+        return fileobj
 
     def __repr__(self):
         return 'File("%s")' % self.url

@@ -220,11 +220,12 @@ class Formula(NameVersionRevisionComparable):
         meta_tarinfo.mode = 0644
         meta_tarinfo.size = meta_string_size
 
-        with tarfile.open(filepath, 'w:bz2') as pkg:
-            pkg.addfile(meta_tarinfo, meta_string)
-            for pkg_file in files:
-                pkg.add(os.path.join(self.environment.prefix, pkg_file),
-                        pkg_file, recursive=False)
+        pkg = tarfile.open(filepath, 'w:bz2')
+        pkg.addfile(meta_tarinfo, meta_string)
+        for pkg_file in files:
+            pkg.add(os.path.join(self.environment.prefix, pkg_file),
+                    pkg_file, recursive=False)
+        pkg.close()
 
         LOGGER.info('Package %s created', filepath)
 

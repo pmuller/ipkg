@@ -32,9 +32,9 @@ class TestFormula(TestCase):
         formula_cls = Formula.from_file(formula_file)
         formula = formula_cls()
         package_file = formula.build(self.tmpdir)
-        with taropen(package_file) as f:
-            meta = json.load(f.extractfile('.ipkg.meta'))
-            self.assertEqual(meta['name'], 'foo')
+        f = taropen(package_file):
+        meta = json.load(f.extractfile('.ipkg.meta'))
+        self.assertEqual(meta['name'], 'foo')
 
     def test_build_dependencies(self):
         formula_file = join(FORMULA_DIR, 'foo-bar/foo-bar-1.0-1.py')

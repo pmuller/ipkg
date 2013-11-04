@@ -1,4 +1,4 @@
-from os.path import isdir, join, dirname, exists, isfile
+from os.path import join, dirname, isfile
 from os import mkdir
 from shutil import rmtree, copyfile
 from tempfile import mkdtemp

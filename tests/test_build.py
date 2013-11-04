@@ -32,7 +32,7 @@ class TestFormula(TestCase):
         formula_cls = Formula.from_file(formula_file)
         formula = formula_cls()
         package_file = formula.build(self.tmpdir)
-        f = taropen(package_file):
+        f = taropen(package_file)
         meta = json.load(f.extractfile('.ipkg.meta'))
         self.assertEqual(meta['name'], 'foo')
 

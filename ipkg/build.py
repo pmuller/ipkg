@@ -104,7 +104,8 @@ class Formula(NameVersionRevisionComparable):
         else:
             raise AttributeError(attr)
 
-    def build(self, package_dir, remove_build_dir=True, repository=None):
+    def build(self, package_dir, remove_build_dir=True, repository=None,
+              os_name=None, os_release=None, arch=None):
         """Build the formula."""
         LOGGER.debug('%r.build(package_dir=%s, remove_build_dir=%s)', self, package_dir, remove_build_dir)
 
@@ -129,7 +130,8 @@ class Formula(NameVersionRevisionComparable):
                         ', '.join(self.dependencies))
             for dependency in self.dependencies:
                 if dependency not in self.environment.packages:
-                    self.environment.install(dependency, repository)
+                    self.environment.install(dependency, repository,
+                                             os_name, os_release, arch)
                     installed_dependencies.append(dependency)
 
         # Create the sources root directory

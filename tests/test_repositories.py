@@ -84,6 +84,7 @@ class TestFormulaRepository(TestCase):
 
     def test_iter(self):
         repo = FormulaRepository(FORMULA_DIR)
-        self.assertEqual(
-            [(f.name, f.version, f.revision) for f in repo],
-            [('bar', '1.0', 1), ('foo', '1.0', 1), ('foo-bar', '1.0', 1)])
+        packages = [(f.name, f.version, f.revision) for f in repo]
+        self.assertTrue(('bar', '1.0', 1) in packages)
+        self.assertTrue(('foo', '1.0', 1) in packages)
+        self.assertTrue(('foo-bar', '1.0', 1) in packages)

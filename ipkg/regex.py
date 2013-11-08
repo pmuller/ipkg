@@ -15,6 +15,9 @@ FORMULA_FILE = re.compile(r"""
 $
 """, re.X)
 
+_PLATFORM = r'(?P<os_name>\w+)-(?P<os_release>[\.\w]+)-(?P<arch>[_\w]+)'
+PLATFORM = re.compile(_PLATFORM)
+
 PACKAGE_FILE = re.compile(r"""
 ^
 (?P<name>[A-Za-z0-9_\-]+)
@@ -23,14 +26,10 @@ PACKAGE_FILE = re.compile(r"""
 -
 (?P<revision>\w+)
 -
-(?P<os_name>\w+)
--
-(?P<os_release>[\.\w]+)
--
-(?P<arch>[_\w]+)
+%s
 \.ipkg
 $
-""", re.X)
+""" % _PLATFORM, re.X)
 
 PACKAGE_SPEC = re.compile(r"""
 ^

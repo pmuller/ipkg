@@ -9,7 +9,7 @@ import errno
 import shlex
 
 from .files import vopen
-from .exceptions import IpkgException
+from .exceptions import IpkgException, InvalidPackage
 from .compat import basestring, StringIO
 from .regex import PACKAGE_SPEC
 
@@ -28,16 +28,6 @@ class ExecutionFailed(IpkgException):
     def __str__(self):
         return 'Command "%s" failed: %s' % (
             ' '.join(self.command), self.reason)
-
-
-class InvalidPackage(IpkgException):
-    """Failed parse a package spec or argument is not package like.
-    """
-    def __init__(self, spec):
-        self.spec = spec
-
-    def __str__(self):
-        return 'Invalid package: %s' % self.spec
 
 
 class InvalidDictFileContent(IpkgException):

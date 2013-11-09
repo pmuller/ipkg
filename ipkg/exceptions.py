@@ -19,3 +19,13 @@ class IpkgException(Exception):
                 return str(self.args)
             else:
                 return ''
+
+
+class InvalidPackage(IpkgException):
+    """Failed parse a package spec or argument is not package like.
+    """
+    def __init__(self, spec):
+        self.spec = spec
+
+    def __str__(self):
+        return 'Invalid package: %s' % self.spec

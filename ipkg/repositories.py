@@ -1,24 +1,41 @@
 import logging
 import hashlib
 import os
-import json
 
 from pkg_resources import parse_version
 
 from .packages import MetaPackage, PackageFile
-from .exceptions import IpkgException
-from .files import vopen
-from .utils import DictFile, parse_package_spec, make_package_spec, mkdir
+from .exceptions import IpkgException, InvalidPackage
+from .utils import DictFile, make_package_spec, mkdir
 from .build import Formula
 from .regex import FORMULA_FILE
+from .compat import basestring
+from .requirements import PackageRequirement
 
 
 LOGGER = logging.getLogger(__name__)
 
 
+class RequirementNotFound(IpkgException):
+
+    MESSAGE = 'Cannot find requirement %s for platform %s'
+
+
+def compare_versions(a, b):
+    if a < b:
+        return -1
+    elif a == b:
+        return 0
+    else:  # a > b
+        return 1
+
+
 class PackageRepository(object):
 
     META_FILE_NAME = 'repository.json'
+
+    # easier to catch the exception when raised by find()
+    RequirementNotFound = RequirementNotFound
 
     def __init__(self, base):
         self.__meta = None
@@ -31,49 +48,48 @@ class PackageRepository(object):
     def __str__(self):
         return self.base
 
-    def find(self, spec, os_name, os_release, arch):
-        meta = self.meta
-        spec = parse_package_spec(spec)
-        name = spec['name']
-        version = spec['version']
-        revision = spec['revision']
+    def find(self, requirement, platform):
+        """Find the more recent package built for ``platform`` and which
+           matches ``requirement``.
+        """
+        if not isinstance(requirement, PackageRequirement):
+            requirement = PackageRequirement(requirement)
+        version, revision = self.__match(requirement, platform)
+        return self.__make_package_file(requirement.name,
+                                        version, revision, platform)
 
-        if name not in meta:
-            raise IpkgException('Package %s not found' % name)
-        elif version is not None and version not in meta[name]:
-            raise IpkgException('Package %s version %s not found' %
-                                (name, version))
-        elif revision is not None and revision not in meta[name][version]:
-            raise IpkgException('Package %s version %s revision %s not found' %
-                                (name, version, revision))
+    def __match(self, requirement, platform):
+        name = requirement.name
 
-        if version is None or revision is None:
-            version, revision = self.__find_latest(name, version)
+        for version in self.__versions(name):
+            for revision in self.__revisions(name, version):
+                package = MetaPackage({'name': name,
+                                       'version': version,
+                                       'revision': revision})
+                if requirement.is_satisfied_by(package):
+                    return version, revision
+        else:
+            raise RequirementNotFound(requirement, platform)
 
+    def __make_package_file(self, name, version, revision, platform):
         filepath = '%(name)s/%(name)s-%(version)s-%(revision)s-' \
-                   '%(os_name)s-%(os_release)s-%(arch)s.ipkg' % vars()
+                   '%(platform)s.ipkg' % vars()
         return PackageFile(os.path.join(self.base, filepath))
 
-    def __find_latest(self, name, version=None):
+    def __versions(self, name):
+        if name in self.meta:
+            return sorted(self.meta[name].keys(), reverse=True,
+                          key=parse_version, cmp=compare_versions)
+        else:
+            return []
 
-        def compare(a, b):
-            if a < b:
-                return -1
-            elif a == b:
-                return 0
-            else:  # a > b
-                return 1
-
-        if version is None:
-            versions = self.meta[name].keys()
-            versions = sorted(versions, key=parse_version, cmp=compare)
-            version = versions[-1]
-
-        revisions = [str(r) for r in self.meta[name][version]]
-        revisions = sorted(revisions, key=parse_version, cmp=compare)
-        revision = revisions[-1]
-
-        return version, revision
+    def __revisions(self, name, version):
+        if name in self.meta and version in self.meta[name]:
+            revisions = [str(r) for r in self.meta[name][version]]
+            return sorted(revisions, key=parse_version, cmp=compare_versions,
+                          reverse=True)
+        else:
+            return []
 
     def __iter__(self):
         packages = []
@@ -122,9 +138,7 @@ class LocalPackageRepository(PackageRepository):
                                      filepath)
                         continue
 
-                    package = PackageFile(filepath)
-                    self.__add_package(name, package.version,
-                                       package.revision, filepath)
+                    self.add(filepath)
 
                 # Remove package name if no version was added
                 if not meta[name].keys():
@@ -144,8 +158,7 @@ class LocalPackageRepository(PackageRepository):
         if not os.path.exists(package_dir):
             mkdir(package_dir)
         package_file = formula.build(package_dir, remove_build_dir, self)
-        self.__add_package(formula.name, formula.version,
-                           formula.revision, package_file)
+        self.add(package_file)
         self.meta.save()
         return package_file
 
@@ -205,31 +218,47 @@ class LocalPackageRepository(PackageRepository):
 
         return built_packages
 
-    def __add_package(self, name, version, revision, filepath):
+    def add(self, package, compute_checksum=True):
         """Add a package to the repository.
+
+        ``package`` can be a ``PackageFile`` or string.
+        If it is a string, it is expected to be a valid path to an ipkg
+        package file.
         """
-        spec = make_package_spec(vars())
-        LOGGER.debug('Adding %s to repository', spec)
+        LOGGER.debug('Adding %s to repository', package)
         meta = self.meta
 
-        if name not in meta:
-            meta[name] = {}
-        if version not in meta[name]:
-            meta[name][version] = {}
+        if isinstance(package, basestring):
+            if os.path.exists(package):
+                package = PackageFile(package)
+            else:
+                raise InvalidPackage(package)
 
-        hashobj = hashlib.sha256()
-        with open(filepath) as f:
-            hashobj.update(f.read())
-        checksum = hashobj.hexdigest()
+        # Check if the package obj is package-like
+        if not hasattr(package, 'meta') or \
+           not hasattr(package, 'name') or \
+           not hasattr(package, 'version') or \
+           not hasattr(package, 'revision'):
+            raise InvalidPackage(package)
 
-        LOGGER.debug('sha256: %s', checksum)
+        if package.name not in meta:
+            meta[package.name] = {}
+        if package.version not in meta[package.name]:
+            meta[package.name][package.version] = {}
 
-        package_meta = dict(PackageFile(filepath).meta)
-        package_meta['checksum'] = checksum
+        package_meta = dict(package.meta)
 
-        meta[name][version][revision] = package_meta
+        if compute_checksum:
+            hashobj = hashlib.sha256()
+            with open(str(package)) as fileobj:
+                hashobj.update(fileobj.read())
+            checksum = hashobj.hexdigest()
+            LOGGER.debug('sha256: %s', checksum)
+            package_meta['checksum'] = checksum
 
-        LOGGER.info('Package %s added to repository', spec)
+        meta[package.name][package.version][package.revision] = package_meta
+
+        LOGGER.info('Package %s added to repository', package)
 
 
 class FormulaRepository(object):

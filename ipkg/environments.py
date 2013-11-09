@@ -325,15 +325,10 @@ class Environment(object):
 
         LOGGER.info('Package %s uninstalled', package)
 
-    def install(self, package, repository=None,
-                os_name=None, os_release=None, arch=None):
+    def install(self, package, repository=None):
         """Install a package.
         """
         LOGGER.info('Installing %s', package)
-
-        os_name = os_name or platform.NAME
-        os_release = os_release or platform.RELEASE
-        arch = arch or platform.ARCHITECTURE
 
         if isinstance(package, basestring):
 
@@ -346,9 +341,8 @@ class Environment(object):
                 if repository is None:
                     raise IpkgException('Cannot find package %s' % package)
                 else:
-                    package = repository.find(package, os_name=os_name,
-                                              os_release=os_release,
-                                              arch=arch)
+                    package = repository.find(package,
+                                              platform=platform.PLATFORM)
 
         elif not isinstance(package, BasePackage):
             raise IpkgException('Invalid package: %r' % package)
@@ -375,8 +369,7 @@ class Environment(object):
             for dependency in package.dependencies:
                 if dependency not in self.meta['packages']:
                     LOGGER.info('Installing dependency: %s', dependency)
-                    self.install(dependency, repository,
-                                 os_name, os_release, arch)
+                    self.install(dependency, repository)
 
         package.extract(self.prefix)
 

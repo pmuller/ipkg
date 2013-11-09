@@ -103,13 +103,13 @@ class TestEnvironment(TestCase):
 
     def test_install_repository(self):
         repository = PackageRepository(PACKAGE_DIR)
-        self.env.install('foo', repository, 'osx', '10.8.4', 'x86_64')
+        self.env.install('foo', repository)
         readme = join(self.prefix, 'foo.README')
         self.assertEqual(open(readme).read(), 'Hello world\n')
 
     def test_install_dependencies(self):
         repository = PackageRepository(PACKAGE_DIR)
-        self.env.install('foo-bar', repository, 'osx', '10.8.4', 'x86_64')
+        self.env.install('foo-bar', repository)
         # From 'foo'
         readme = join(self.prefix, 'foo.README')
         self.assertEqual(open(readme).read(), 'Hello world\n')

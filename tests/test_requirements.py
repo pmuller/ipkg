@@ -26,3 +26,9 @@ class TestPackageRequirement(TestCase):
         string = 'foo'
         req = requirements.PackageRequirement(string)
         self.assertEqual(string, str(req))
+
+    def test_eq(self):
+        self.assertTrue(requirements.PackageRequirement('foo==1.0') ==
+                        requirements.PackageRequirement('foo == 1.0'))
+        self.assertTrue(requirements.PackageRequirement('foo==1.0')
+                        == 'foo == 1.0')

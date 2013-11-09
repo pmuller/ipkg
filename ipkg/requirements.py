@@ -18,6 +18,19 @@ class PackageRequirement(object):
 
         self.name = self.__requirement.project_name
 
+    def __eq__(self, other):
+        if isinstance(other, PackageRequirement):
+            return str(self) == str(other)
+        elif isinstance(other, basestring):
+            try:
+                requirement = pkgres.Requirement.parse(other)
+            except ValueError:
+                return False
+            else:
+                return str(self) == str(requirement)
+        else:
+            return False
+
     def __str__(self):
         return str(self.__requirement)
 

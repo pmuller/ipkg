@@ -8,6 +8,7 @@ import time
 import tarfile
 import json
 import imp
+from socket import gethostname
 
 from .environments import Environment
 from .exceptions import IpkgException
@@ -16,7 +17,7 @@ from .files import vopen
 from .mixins import NameVersionRevisionComparable
 from .utils import unarchive, mkdir
 from .compat import basestring, StringIO
-from . import platform
+from .platforms import Platform
 
 
 LOGGER = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ class Formula(NameVersionRevisionComparable):
     build_envvars = None
     # Arguments passed to ``./configure``
     configure_args = ['--prefix=%(prefix)s']
+    platform = 'any'
 
     def __init__(self, environment=None, verbose=False, log=None):
 
@@ -135,8 +137,7 @@ class Formula(NameVersionRevisionComparable):
         else:
             raise AttributeError(attr)
 
-    def build(self, package_dir, remove_build_dir=True, repository=None,
-              platform=None):
+    def build(self, package_dir, remove_build_dir=True, repository=None):
         """Build the formula."""
         LOGGER.debug('%r.build(package_dir=%s, remove_build_dir=%s)',
                      self, package_dir, remove_build_dir)
@@ -235,12 +236,10 @@ class Formula(NameVersionRevisionComparable):
             'name': self.name,
             'version': self.version,
             'revision': str(self.revision),
-            'os_name': platform.NAME,
-            'os_release': platform.RELEASE,
-            'arch': platform.ARCHITECTURE,
+            'platform': str(Platform.current()),
             'dependencies': self.dependencies,
             'homepage': self.homepage,
-            'hostname': platform.HOSTNAME,
+            'hostname': gethostname().split('.')[0],
             'timestamp': time.time(),
             'files': tuple(files),
             'build_prefix': build_dir,

@@ -82,3 +82,7 @@ class PackageFile(BasePackage):
 
     def __str__(self):
         return self.__spec
+
+
+def make_filename(**meta):
+    return '%(name)s-%(version)s-%(revision)s-%(platform)s.ipkg' % meta

@@ -3,12 +3,9 @@ import json
 import tarfile
 import logging
 
-from pkg_resources import parse_version
-
 from .files import vopen
 from .exceptions import IpkgException
 from .mixins import NameVersionRevisionComparable
-from .utils import make_package_spec
 
 
 LOGGER = logging.getLogger(__name__)
@@ -25,12 +22,11 @@ class UnknownMeta(IpkgException):
         return 'Unknown meta data: %s' % self.meta
 
 
-class BasePackage(NameVersionRevisionComparable):
+class MetaPackage(NameVersionRevisionComparable):
     """Base package class.
     """
-    def __init__(self):
-        self.meta = {}
-        self.__file = None
+    def __init__(self, meta):
+        self.meta = meta
 
     def __getattr__(self, attr):
         """Make package meta data accessible as attributes.
@@ -40,48 +36,42 @@ class BasePackage(NameVersionRevisionComparable):
         else:
             raise UnknownMeta(attr)
 
-
-class MetaPackage(BasePackage):
-    """A package which is already installed or present in a repository.
-       It's not a real file, just (possible part of) its meta data.
-    """
-    def __init__(self, meta):
-        super(MetaPackage, self).__init__()
-        self.meta = meta
-
-    def __repr__(self):
-        return 'InstalledPackage(%r)' % self.meta
+    def as_requirement(self):
+        return '%(name)s==%(version)s' % self.meta
 
     def __str__(self):
-        return make_package_spec(self.meta)
+        return self.as_requirement()
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.meta)
 
 
-class PackageFile(BasePackage):
+class PackageFile(MetaPackage):
     """An ipkg package file.
     """
-    def __init__(self, package_spec):
-        super(PackageFile, self). __init__()
-        self.__spec = package_spec
-        vfile = vopen(package_spec)
-        self.__file = tarfile.open(fileobj=vfile)
-        # WARNING : This is slow on big packages !
-        #LOGGER.debug('%r: Extracting meta file', self)
-        meta_string = self.__file.extractfile(META_FILE).read()
-        #LOGGER.debug('%r: Meta file extracted', self)
-        self.meta = json.loads(meta_string)
+    def __init__(self, path, meta=None):
+        self.__path = path
+        self.__tarfile = None
+        self.__meta = meta
+
+    @property
+    def meta(self):
+        if not self.__meta:
+            self.__meta = json.load(self._tarfile.extractfile(META_FILE))
+        return self.__meta
+
+    @property
+    def _tarfile(self):
+        if self.__tarfile is None:
+            self.__tarfile = tarfile.open(fileobj=vopen(self.__path))
+        return self.__tarfile
 
     def extract(self, path):
         """Extract the package to ``path``.
         """
-        LOGGER.debug('%r.extract("%s")', self, path)
-        files = [m for m in self.__file.getmembers() if m.path != META_FILE]
-        self.__file.extractall(path, files)
-
-    def __repr__(self):
-        return 'PackageFile("%s")' % self.__spec
-
-    def __str__(self):
-        return self.__spec
+        LOGGER.debug('Extracting %s in %s', self, path)
+        files = [m for m in self._tarfile.getmembers() if m.path != META_FILE]
+        self._tarfile.extractall(path, files)
 
 
 def make_filename(**meta):

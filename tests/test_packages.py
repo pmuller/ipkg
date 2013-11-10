@@ -18,7 +18,7 @@ class TestMetaPackage(TestCase):
         self.assertEqual(
             str(MetaPackage({'version': '1.0',
                              'revision': '1', 'name': 'foo'})),
-            'foo==1.0:1')
+            'foo==1.0')
 
 
 class TestPackageFile(TestCase):

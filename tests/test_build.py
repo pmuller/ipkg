@@ -41,8 +41,7 @@ class TestFormula(TestCase):
         formula_cls = Formula.from_file(formula_file)
         formula = formula_cls()
         repository = PackageRepository(PACKAGE_DIR)
-        package_file = formula.build(self.tmpdir, True, repository,
-                                     'osx-10.8.4-x86_64')
+        package_file = formula.build(self.tmpdir, True, repository)
         f = taropen(package_file)
         meta = json.load(f.extractfile('.ipkg.meta'))
         self.assertEqual(meta['name'], 'foo-bar')

@@ -50,7 +50,7 @@ class PackageFile(MetaPackage):
     """An ipkg package file.
     """
     def __init__(self, path, meta=None):
-        self.__path = path
+        self.path = path
         self.__tarfile = None
         self.__meta = meta
 
@@ -63,7 +63,7 @@ class PackageFile(MetaPackage):
     @property
     def _tarfile(self):
         if self.__tarfile is None:
-            self.__tarfile = tarfile.open(fileobj=vopen(self.__path))
+            self.__tarfile = tarfile.open(fileobj=vopen(self.path))
         return self.__tarfile
 
     def extract(self, path):

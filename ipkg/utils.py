@@ -69,7 +69,7 @@ class DictFile(dict):
                 except ValueError:
                     raise InvalidDictFileContent(self.__file_path)
                 else:
-                    self.update(json.loads(raw))
+                    self.update(data)
 
     def clear(self):
         """Force the dictionary to be empty.

@@ -12,7 +12,7 @@ from socket import gethostname
 
 from .environments import Environment
 from .exceptions import IpkgException
-from .packages import META_FILE
+from .packages import META_FILE, make_filename
 from .files import vopen
 from .mixins import NameVersionRevisionComparable
 from .utils import unarchive, mkdir
@@ -246,9 +246,7 @@ class Formula(NameVersionRevisionComparable):
             'envvars': self.envvars,
         }
 
-        filename = '%(name)s-%(version)s-%(revision)s-' \
-                   '%(os_name)s-%(os_release)s-%(arch)s.ipkg' % meta
-        filepath = os.path.join(package_dir, filename)
+        filepath = os.path.join(package_dir, make_filename(**meta))
 
         meta_string = StringIO()
         json.dump(meta, meta_string, indent=4)

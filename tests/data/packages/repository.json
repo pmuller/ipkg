@@ -1,71 +1,59 @@
 {
-    "foo": {
-        "1.0": {
-            "1": {
-                "files": [
-                    "foo.README"
-                ], 
-                "envvars": null, 
-                "os_release": "10.8.4", 
-                "os_name": "osx", 
-                "name": "foo", 
-                "timestamp": 1383517538.701264, 
-                "hostname": "menuiserie", 
-                "dependencies": [], 
-                "arch": "x86_64", 
-                "version": "1.0", 
-                "build_prefix": "/var/folders/11/kbqvnbmx4v9035mz431hlxm80000gn/T/ipkg-build-Megath/environment", 
-                "checksum": "38edff1f3251d47b3846cc5a34fa5f9172bbeb633fd3d3aa5e30ed81938dec67", 
-                "homepage": null, 
-                "revision": "1"
-            }
+    "foo": [
+        {
+            "files": [
+                "foo.README"
+            ], 
+            "envvars": null, 
+            "name": "foo", 
+            "timestamp": 1384204941.012245, 
+            "hostname": "menuiserie", 
+            "platform": "osx-10.8.4-x86_64", 
+            "dependencies": [], 
+            "version": "1.0", 
+            "build_prefix": "/var/folders/11/kbqvnbmx4v9035mz431hlxm80000gn/T/ipkg-build-fkHufB/environment", 
+            "checksum": "6458fc960f72bd78e049a528df88de307509b56444cb332f16198321eab3299b", 
+            "homepage": null, 
+            "revision": "1"
         }
-    }, 
-    "bar": {
-        "1.0": {
-            "1": {
-                "files": [
-                    "bar.README"
-                ], 
-                "envvars": null, 
-                "os_release": "10.8.4", 
-                "os_name": "osx", 
-                "name": "bar", 
-                "timestamp": 1383517538.684266, 
-                "hostname": "menuiserie", 
-                "dependencies": [], 
-                "arch": "x86_64", 
-                "version": "1.0", 
-                "build_prefix": "/var/folders/11/kbqvnbmx4v9035mz431hlxm80000gn/T/ipkg-build-VvLjIH/environment", 
-                "checksum": "4e989ebca82bcbb8d06c95a96fcf85b389c59dbc6533b02f14b19adebe77d4e5", 
-                "homepage": null, 
-                "revision": "1"
-            }
+    ], 
+    "bar": [
+        {
+            "files": [
+                "bar.README"
+            ], 
+            "envvars": null, 
+            "name": "bar", 
+            "timestamp": 1384204946.721534, 
+            "hostname": "menuiserie", 
+            "platform": "osx-10.8.4-x86_64", 
+            "dependencies": [], 
+            "version": "1.0", 
+            "build_prefix": "/var/folders/11/kbqvnbmx4v9035mz431hlxm80000gn/T/ipkg-build-UM6IDs/environment", 
+            "checksum": "b530c53ce9077945594098f17c9643075548f83dda918b4551f6a12c09533919", 
+            "homepage": null, 
+            "revision": "1"
         }
-    }, 
-    "foo-bar": {
-        "1.0": {
-            "1": {
-                "files": [
-                    "foo-bar.README"
-                ], 
-                "envvars": null, 
-                "os_release": "10.8.4", 
-                "os_name": "osx", 
-                "name": "foo-bar", 
-                "timestamp": 1383517538.718073, 
-                "hostname": "menuiserie", 
-                "dependencies": [
-                    "foo", 
-                    "bar"
-                ], 
-                "arch": "x86_64", 
-                "version": "1.0", 
-                "build_prefix": "/var/folders/11/kbqvnbmx4v9035mz431hlxm80000gn/T/ipkg-build-5atJAQ/environment", 
-                "checksum": "1fca29da367d2cb342d0b35dd4f4b4a02e55de70a38e0b677726907c30e4e201", 
-                "homepage": null, 
-                "revision": "1"
-            }
+    ], 
+    "foo-bar": [
+        {
+            "files": [
+                "foo-bar.README"
+            ], 
+            "envvars": null, 
+            "name": "foo-bar", 
+            "timestamp": 1384209053.77109, 
+            "hostname": "menuiserie", 
+            "platform": "osx-10.8.4-x86_64", 
+            "dependencies": [
+                "foo", 
+                "bar"
+            ], 
+            "version": "1.0", 
+            "build_prefix": "/var/folders/11/kbqvnbmx4v9035mz431hlxm80000gn/T/ipkg-build-ZGbY9N/environment", 
+            "checksum": "734fe362f33f24bd4959995a73d2001f1c890a103ffa3b6c5f73ba40e4554cf1", 
+            "homepage": null, 
+            "revision": "1"
         }
-    }
+    ]
 }

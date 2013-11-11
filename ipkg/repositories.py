@@ -1,16 +1,17 @@
 import logging
 import hashlib
 import os
+from collections import defaultdict
 
 from pkg_resources import parse_version
 
-from .packages import MetaPackage, PackageFile
+from .packages import PackageFile, make_filename
 from .exceptions import IpkgException, InvalidPackage
 from .utils import DictFile, make_package_spec, mkdir
 from .build import Formula
 from .regex import FORMULA_FILE
 from .compat import basestring
-from .requirements import PackageRequirement
+from .requirements import Requirement
 
 
 LOGGER = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 class RequirementNotFound(IpkgException):
 
-    MESSAGE = 'Cannot find requirement %s for platform %s'
+    MESSAGE = 'Cannot find requirement %s'
 
 
 def compare_versions(a, b):
@@ -30,7 +31,57 @@ def compare_versions(a, b):
         return 1
 
 
-class PackageRepository(object):
+def extract_version(item):
+    if isinstance(item, dict):
+        version = item['version']
+        revision = item['revision']
+    else:
+        version = item.version
+        revision = item.revision
+    return parse_version(version), parse_version(revision)
+
+
+class BaseRepository(object):
+
+    def __init__(self, base):
+        self.base = base
+        self.meta = {}
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.base)
+
+    def __str__(self):
+        return self.base
+
+    def __getitem__(self, requirement):
+        """Find the more recent package matching ``requirement``.
+        """
+        items = self.find(requirement)
+        if items:
+            return items[0]
+        else:
+            raise RequirementNotFound(requirement)
+
+    def find(self, requirement):
+        if isinstance(requirement, basestring):
+            requirement = Requirement(requirement)
+
+        if not isinstance(requirement, Requirement):
+            raise TypeError(requirement)
+
+        items = self.meta.get(requirement.name)
+        if items:
+            results = [item for item in items
+                       if requirement.satisfied_by(item)]
+
+            return sorted(results, key=extract_version,
+                          cmp=compare_versions, reverse=True)
+
+        else:
+            return []
+
+
+class PackageRepository(BaseRepository):
 
     META_FILE_NAME = 'repository.json'
 
@@ -38,66 +89,22 @@ class PackageRepository(object):
     RequirementNotFound = RequirementNotFound
 
     def __init__(self, base):
-        self.__meta = None
-        self.base = base
+        super(PackageRepository, self).__init__(base)
         self.meta = DictFile(os.path.join(base, self.META_FILE_NAME))
 
-    def __repr__(self):
-        return 'PackageRepository(%r)' % self.base
-
-    def __str__(self):
-        return self.base
-
-    def find(self, requirement, platform):
-        """Find the more recent package built for ``platform`` and which
-           matches ``requirement``.
-        """
-        if not isinstance(requirement, PackageRequirement):
-            requirement = PackageRequirement(requirement)
-        version, revision = self.__match(requirement, platform)
-        return self.__make_package_file(requirement.name,
-                                        version, revision, platform)
-
-    def __match(self, requirement, platform):
-        name = requirement.name
-
-        for version in self.__versions(name):
-            for revision in self.__revisions(name, version):
-                package = MetaPackage({'name': name,
-                                       'version': version,
-                                       'revision': revision})
-                if requirement.is_satisfied_by(package):
-                    return version, revision
-        else:
-            raise RequirementNotFound(requirement, platform)
-
-    def __make_package_file(self, name, version, revision, platform):
-        filepath = '%(name)s/%(name)s-%(version)s-%(revision)s-' \
-                   '%(platform)s.ipkg' % vars()
-        return PackageFile(os.path.join(self.base, filepath))
-
-    def __versions(self, name):
-        if name in self.meta:
-            return sorted(self.meta[name].keys(), reverse=True,
-                          key=parse_version, cmp=compare_versions)
-        else:
-            return []
-
-    def __revisions(self, name, version):
-        if name in self.meta and version in self.meta[name]:
-            revisions = [str(r) for r in self.meta[name][version]]
-            return sorted(revisions, key=parse_version, cmp=compare_versions,
-                          reverse=True)
-        else:
-            return []
+    def __make_package_file(self, meta):
+        filepath = os.path.join(self.base, meta['name'],
+                                make_filename(**meta))
+        return PackageFile(filepath, meta)
 
     def __iter__(self):
-        packages = []
-        for name, versions in self.meta.items():
-            for version, revisions in versions.items():
-                for revision, meta in revisions.items():
-                    packages.append(MetaPackage(meta))
-        return iter(packages)
+        for meta_list in self.meta.values():
+            for meta in meta_list:
+                yield self.__make_package_file(meta)
+
+    def find(self, requirement):
+        results = super(PackageRepository, self).find(requirement)
+        return map(self.__make_package_file, results)
 
 
 class LocalPackageRepository(PackageRepository):
@@ -110,45 +117,32 @@ class LocalPackageRepository(PackageRepository):
         meta.clear()
         names = os.listdir(self.base)
 
-        if names:
-            LOGGER.debug('Repository package names: %s', ' '.join(names))
+        for name in names:
+            if name == self.META_FILE_NAME:
+                # Ignore the meta data file at repository root
+                continue
 
-            for name in names:
-                if name == self.META_FILE_NAME:
-                    # Ignore the meta data file at repository root
+            package_dir = os.path.join(self.base, name)
+
+            if not os.path.isdir(package_dir):
+                #LOGGER.debug('Ignoring, because it is not '
+                #             'a directory: %s', name)
+                continue
+
+            for filename in os.listdir(package_dir):
+                filepath = os.path.join(package_dir, filename)
+
+                if not os.path.isfile(filepath):
+                    #LOGGER.debug('Ignoring, because it is not a file: %s',
+                    #             filepath)
                     continue
 
-                if name not in meta:
-                    meta[name] = {}
-
-                package_dir = os.path.join(self.base, name)
-
-                if not os.path.isdir(package_dir):
-                    LOGGER.debug('Ignoring, because it is not '
-                                 'a directory: %s', name)
-                    continue
-
-                files = os.listdir(package_dir)
-
-                for filename in files:
-                    filepath = os.path.join(package_dir, filename)
-
-                    if not os.path.isfile(filepath):
-                        LOGGER.debug('Ignoring, because it is not a file: %s',
-                                     filepath)
-                        continue
-
-                    self.add(filepath)
-
-                # Remove package name if no version was added
-                if not meta[name].keys():
-                    meta.pop(name)
+                self.add(filepath)
 
         if not names or not meta.keys():
             LOGGER.warning('No package found')
 
         meta.save()
-
         LOGGER.info('Repository meta data updated')
 
     def build_formula(self, formula, remove_build_dir=True):
@@ -226,55 +220,53 @@ class LocalPackageRepository(PackageRepository):
         package file.
         """
         LOGGER.debug('Adding %s to repository', package)
-        meta = self.meta
 
-        if isinstance(package, basestring):
-            if os.path.exists(package):
-                package = PackageFile(package)
-            else:
-                raise InvalidPackage(package)
+        if isinstance(package, basestring) and os.path.exists(package):
+            package = PackageFile(package)
 
-        # Check if the package obj is package-like
-        if not hasattr(package, 'meta') or \
-           not hasattr(package, 'name') or \
-           not hasattr(package, 'version') or \
-           not hasattr(package, 'revision'):
+        if not isinstance(package, PackageFile):
             raise InvalidPackage(package)
 
+        meta = self.meta
+
         if package.name not in meta:
-            meta[package.name] = {}
-        if package.version not in meta[package.name]:
-            meta[package.name][package.version] = {}
+            meta[package.name] = []
 
         package_meta = dict(package.meta)
 
         if compute_checksum:
             hashobj = hashlib.sha256()
-            with open(str(package)) as fileobj:
+            with open(package.path) as fileobj:
                 hashobj.update(fileobj.read())
             checksum = hashobj.hexdigest()
             LOGGER.debug('sha256: %s', checksum)
             package_meta['checksum'] = checksum
 
-        meta[package.name][package.version][package.revision] = package_meta
+        meta[package.name].append(package_meta)
 
         LOGGER.info('Package %s added to repository', package)
 
 
-class FormulaRepository(object):
+class FormulaRepository(BaseRepository):
     """A Formula repository.
     """
     def __init__(self, base):
-        self.base = base
+        super(FormulaRepository, self).__init__(base)
+        self.meta = defaultdict(list)
 
-    def __iter__(self):
-        formulas = []
         for name in os.listdir(self.base):
             name_dir = os.path.join(self.base, name)
+
             if not os.path.isdir(name_dir):
                 continue
+
             for formula_file in os.listdir(name_dir):
                 if FORMULA_FILE.match(formula_file):
                     formula_filepath = os.path.join(name_dir, formula_file)
-                    formulas.append(Formula.from_file(formula_filepath))
-        return iter(formulas)
+                    formula = Formula.from_file(formula_filepath)
+                    self.meta[formula.name].append(formula)
+
+    def __iter__(self):
+        for formula_list in self.meta.values():
+            for formula in formula_list:
+                yield formula

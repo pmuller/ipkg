@@ -1,23 +1,16 @@
 import sys
 import os
-import stat
-import time
 import logging
 import shutil
-import subprocess
-import errno
 import tempfile
-import shutil
-import bz2
-import json
 
 from .exceptions import IpkgException
-from .packages import BasePackage, MetaPackage, PackageFile
+from .packages import MetaPackage, PackageFile
 from .prefix_rewriters import rewrite_prefix
 from .utils import DictFile, execute, make_package_spec, mkdir
 from .compat import basestring
 from .files.exceptions import FilesException
-from . import platform
+from .platforms import Platform
 
 
 LOGGER = logging.getLogger(__name__)
@@ -180,7 +173,7 @@ class EnvironmentVariables(dict):
             #ArgumentListVariable: ['LDFLAGS', 'CFLAGS', 'CXXFLAGS'],
         }
 
-        if platform.NAME == 'osx':
+        if Platform.current().os_name == 'osx':
             dyn_lib_var_name = 'DYLD_LIBRARY_PATH'
         else:
             dyn_lib_var_name = 'LD_LIBRARY_PATH'
@@ -332,19 +325,18 @@ class Environment(object):
 
         if isinstance(package, basestring):
 
-            try:
+            if os.path.isfile(package):
                 package = PackageFile(package)
 
-            except FilesException:
+            else:
                 # If it does not exist, and this environment has a repository,
                 # try to find it using the repository.
                 if repository is None:
                     raise IpkgException('Cannot find package %s' % package)
                 else:
-                    package = repository.find(package,
-                                              platform=platform.PLATFORM)
+                    package = repository[package]
 
-        elif not isinstance(package, BasePackage):
+        if not isinstance(package, MetaPackage):
             raise IpkgException('Invalid package: %r' % package)
 
         # Check if the package is already installed

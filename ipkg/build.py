@@ -287,7 +287,11 @@ class Formula(NameVersionRevisionComparable):
         filename = os.path.basename(filepath)
         module_name = filename.split('.py')[0].replace('.', '_')
 
-        module = imp.load_source(module_name, filepath)
+        try:
+            module = imp.load_source(module_name, filepath)
+        except ImportError as err:
+            raise IpkgException('Error when importing formula %s: %s' %
+                                (filepath, err))
 
         formula_classes = []
         for attr in dir(module):

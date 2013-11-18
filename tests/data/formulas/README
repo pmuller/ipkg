@@ -1,0 +1,37 @@
+Test data dependency graph
+
+
+simple test :
+
+foo-bar
+ /   \
+foo  bar
+
+
+less simple test :
+
+    a
+   / \
+  b   c
+   \ /  \
+    d--<-e
+
+
+Requirements versions test :
+
+       one
+       / \
+two>1,<2  three==2.0
+    /   \
+four<2   five
+
+       ^--- here "five" should depend on four >1, to ensure the version selected for "four" is >1 AND <2 (both requirements should be honored)
+
+
+
+
+Loop test :
+
+        loop-a
+        /     \
+  loop-b -<->- loop-c

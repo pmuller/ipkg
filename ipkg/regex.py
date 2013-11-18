@@ -9,8 +9,6 @@ FORMULA_FILE = re.compile(r"""
 (?P<name>[A-Za-z0-9_\-]+)
 -
 (?P<version>[0-9a-zA-Z\.\-_]+)
--
-(?P<revision>\w+)
 \.py
 $
 """, re.X)

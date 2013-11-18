@@ -23,12 +23,12 @@ class TestFormula(TestCase):
         rmtree(self.tmpdir)
 
     def test_from_file(self):
-        formula_file = join(FORMULA_DIR, 'foo/foo-1.0-1.py')
+        formula_file = join(FORMULA_DIR, 'foo/foo-1.0.py')
         formula_cls = Formula.from_file(formula_file)
         self.assertTrue(issubclass(formula_cls, Formula))
 
     def test_build(self):
-        formula_file = join(FORMULA_DIR, 'foo/foo-1.0-1.py')
+        formula_file = join(FORMULA_DIR, 'foo/foo-1.0.py')
         formula_cls = Formula.from_file(formula_file)
         formula = formula_cls()
         package_file = formula.build(self.tmpdir)

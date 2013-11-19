@@ -62,7 +62,7 @@ class Formula(NameVersionRevisionComparable):
     build_envvars = None
     # Arguments passed to ``./configure``
     configure_args = ['--prefix=%(prefix)s']
-    platform = 'any'
+    platform = None
 
     def __init__(self, environment=None, verbose=False, log=None):
 
@@ -229,20 +229,21 @@ class Formula(NameVersionRevisionComparable):
     def __create_package(self, files, build_dir, package_dir):
         """Create a package.
         """
-        #LOGGER.debug('%r.__create_package(%r, %r, %r)',
-        #             self, files, build_dir, package_dir)
+        build_platform = str(Platform.current())
+        platform = self.platform or build_platform
 
         meta = {
             'name': self.name,
             'version': self.version,
             'revision': str(self.revision),
-            'platform': str(Platform.current()),
+            'platform': platform,
             'dependencies': self.dependencies,
             'homepage': self.homepage,
             'hostname': gethostname().split('.')[0],
             'timestamp': time.time(),
             'files': tuple(files),
             'build_prefix': build_dir,
+            'build_platform': build_platform,
             'envvars': self.envvars,
         }
 

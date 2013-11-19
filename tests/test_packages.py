@@ -31,7 +31,7 @@ class TestPackageFile(TestCase):
 
     def test_extract(self):
         pkg = PackageFile(join(PACKAGE_DIR,
-                               'foo/foo-1.0-1-osx-10.8.4-x86_64.ipkg'))
+                               'foo/foo-1.0-1-any.ipkg'))
         pkg.extract(self.tmpdir)
         readme = join(self.tmpdir, 'foo.README')
         self.assertTrue(isfile(readme))

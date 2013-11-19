@@ -21,11 +21,11 @@ class TestPackageRepository(TestCase):
         self.repo = PackageRepository(PACKAGE_DIR)
 
     def test_find(self):
-        package = self.repo.find('osx-10.8.4-x86_64:foo==1.0')
+        package = self.repo.find('foo==1.0')
         self._check_package(package[0], 'foo', '1.0', '1')
 
     def test_find_without_version(self):
-        package = self.repo.find('osx-10.8.4-x86_64:foo')
+        package = self.repo.find('foo')
         self._check_package(package[0], 'foo', '1.0', '1')
 
     def _check_package(self, package, name, version, revision):
@@ -53,8 +53,8 @@ class TestLocalPackageRepository(TestCase):
 
     def test_update_metadata(self):
         mkdir(join(self.tmpdir, 'foo'))
-        copyfile(join(PACKAGE_DIR, 'foo/foo-1.0-1-osx-10.8.4-x86_64.ipkg'),
-                 join(self.tmpdir, 'foo/foo-1.0-1-osx-10.8.4-x86_64.ipkg'))
+        copyfile(join(PACKAGE_DIR, 'foo/foo-1.0-1-any.ipkg'),
+                 join(self.tmpdir, 'foo/foo-1.0-1-any.ipkg'))
         self.repo.update_metadata()
         self.assertTrue(isfile(self.meta_path))
         meta = json.load(open(self.meta_path))

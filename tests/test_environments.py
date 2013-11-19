@@ -96,14 +96,14 @@ class TestEnvironment(TestCase):
         self.assertFalse(exists(readme))
 
     def test_install_file(self):
-        filepath = join(PACKAGE_DIR, 'foo/foo-1.0-1-osx-10.8.4-x86_64.ipkg')
+        filepath = join(PACKAGE_DIR, 'foo/foo-1.0-1-any.ipkg')
         self.env.install(filepath)
         readme = join(self.prefix, 'foo.README')
         self.assertEqual(open(readme).read(), 'Hello world\n')
 
     def test_install_repository(self):
         repository = PackageRepository(PACKAGE_DIR)
-        self.env.install('osx-10.8.4-x86_64:foo', repository)
+        self.env.install('foo', repository)
         readme = join(self.prefix, 'foo.README')
         self.assertEqual(open(readme).read(), 'Hello world\n')
 

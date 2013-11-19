@@ -8,6 +8,7 @@ class loop_a(Formula):
     name = 'loop-a'
     version = '1.0'
     sources = File(dirname(__file__) + '/../../sources/loop-a-1.0.tar.gz')
+    platform = 'any'
 
     dependencies = ('loop-b', 'loop-c')
 

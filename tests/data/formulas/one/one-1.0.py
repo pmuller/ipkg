@@ -8,6 +8,7 @@ class one(Formula):
     name = 'one'
     version = '1.0'
     sources = File(dirname(__file__) + '/../../sources/one-1.0.tar.gz')
+    platform = 'any'
 
     dependencies = ('two>1,<2', 'three==2.0')
 

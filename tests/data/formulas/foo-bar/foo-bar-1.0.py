@@ -8,6 +8,7 @@ class foobar(Formula):
     name = 'foo-bar'
     version = '1.0'
     sources = File(dirname(__file__) + '/../../sources/foo-bar-1.0.tar.bz2')
+    platform = 'any'
     dependencies = ('foo', 'bar')
 
     def install(self):

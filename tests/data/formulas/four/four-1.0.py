@@ -8,6 +8,7 @@ class four(Formula):
     name = 'four'
     version = '1.0'
     sources = File(dirname(__file__) + '/../../sources/four-1.0.tar.gz')
+    platform = 'any'
 
     def install(self):
         pass

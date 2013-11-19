@@ -8,6 +8,7 @@ class foo(Formula):
     name = 'foo'
     version = '1.0'
     sources = File(dirname(__file__) + '/../../sources/foo-1.0.tar.gz')
+    platform = 'any'
 
     def install(self):
         self.run_cp(['README', self.environment.prefix + '/foo.README'])

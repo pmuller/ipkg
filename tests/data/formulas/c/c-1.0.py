@@ -8,6 +8,7 @@ class c(Formula):
     name = 'c'
     version = '1.0'
     sources = File(dirname(__file__) + '/../../sources/c-1.0.tar.gz')
+    platform = 'any'
 
     dependencies = ('d', 'e')
 

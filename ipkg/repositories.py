@@ -38,7 +38,7 @@ def extract_version(item):
     else:
         version = item.version
         revision = item.revision
-    return parse_version(version), parse_version(revision)
+    return parse_version(version), parse_version(str(revision))
 
 
 class BaseRepository(object):

@@ -3,8 +3,6 @@ import hashlib
 import os
 from collections import defaultdict
 
-from pkg_resources import parse_version
-
 from .packages import PackageFile, make_filename
 from .exceptions import IpkgException, InvalidPackage
 from .utils import DictFile, make_package_spec, mkdir
@@ -12,6 +10,7 @@ from .build import Formula
 from .regex import FORMULA_FILE
 from .compat import basestring
 from .requirements import Requirement
+from . import versions
 
 
 LOGGER = logging.getLogger(__name__)
@@ -20,25 +19,6 @@ LOGGER = logging.getLogger(__name__)
 class RequirementNotFound(IpkgException):
 
     MESSAGE = 'Cannot find requirement %s'
-
-
-def compare_versions(a, b):
-    if a < b:
-        return -1
-    elif a == b:
-        return 0
-    else:  # a > b
-        return 1
-
-
-def extract_version(item):
-    if isinstance(item, dict):
-        version = item['version']
-        revision = item['revision']
-    else:
-        version = item.version
-        revision = item.revision
-    return parse_version(version), parse_version(str(revision))
 
 
 class BaseRepository(object):
@@ -74,8 +54,8 @@ class BaseRepository(object):
             results = [item for item in items
                        if requirement.satisfied_by(item)]
 
-            return sorted(results, key=extract_version,
-                          cmp=compare_versions, reverse=True)
+            return sorted(results, key=versions.extract,
+                          cmp=versions.compare, reverse=True)
 
         else:
             return []

@@ -41,6 +41,11 @@ class Requirement(object):
         except ValueError:
             raise InvalidRequirement(requirement)
 
+        self.__hash = hash(str(platform)) ^ hash(self.__pkg_req)
+
+    def __hash__(self):
+        return self.__hash
+
     def __eq__(self, other):
         if isinstance(other, Requirement):
             return str(self) == str(other)

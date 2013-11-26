@@ -38,6 +38,9 @@ class Platform(object):
                 ('any' in (self.architecture, platform.architecture) or
                  self.architecture == platform.architecture))
 
+    def __ne__(self, platform):
+        return not (self == platform)
+
     @classmethod
     def parse(cls, platform):
         platform = platform.strip().lower()

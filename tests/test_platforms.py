@@ -20,6 +20,9 @@ class TestPlatform(TestCase):
         self.assertEqual(p, 'any-any-any')
         self.assertFalse(p == 'a-b')
 
+    def test_ne(self):
+        self.assertTrue(Platform('osx','10.9','x86_64') != 'osx-10.8-x86_64')
+
     def test_parse_any(self):
         p = Platform.parse('ANY')
         self.assertEqual(p.os_name, 'any')

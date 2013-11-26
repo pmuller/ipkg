@@ -65,7 +65,7 @@ class Requirement(object):
 
     @property
     def version(self):
-        return ''.join(op + ver for op, ver in self.__pkg_req.specs)
+        return ','.join(op + ver for op, ver in self.__pkg_req.specs)
 
     @property
     def extras(self):

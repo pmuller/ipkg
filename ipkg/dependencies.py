@@ -25,23 +25,36 @@ def select_most_recent_version(objects):
 
 
 class SolverError(IpkgException):
-    pass
+    """An :py:class:`~Solver` error.
+    """
 
 
 class DependencyNotFound(SolverError):
-
-    MESSAGE = 'Cannot find requirement %s, required by %s'
+    """Cannot find a satisfying package for a requirement.
+    """
+    def __init__(self, requirement, requirers):
+        self.requirement = requirement
+        self.requirers = requirers
+        self.message = 'Cannot find package for requirement %s, required ' \
+            'by %s' % (requirement, ', '.join(str(r) for r in requirers))
 
 
 class DependencyLoop(SolverError):
 
-    MESSAGE = 'Dependency loop detected between %s and its dependents: %s'
+    def __init__(self, target, sources):
+        self.target = target
+        self.sources = sources
+        self.message = 'Dependency loop detected: %s still has dependents: ' \
+            '%s' % (target, ', '.join(str(s) for s in sources))
 
 
 class Node(object):
-    """A node of a dependency ``Graph``.
+    """A node of a dependency :py:class:`~Solver`.
 
-    ``obj`` can be a package or a formula.
+    :param obj: The node object
+    :type obj: :py:class:`~ipkg.packages.PackageFile`, \
+    :py:class:`~ipkg.packages.MetaPackage` or \
+    :py:class:`~ipkg.build.Formula`
     """
     def __init__(self, obj, skip_dependencies=False):
         self.obj = obj
@@ -65,67 +78,102 @@ class Node(object):
         return [r for r, s in self.requirements.items() if not s]
 
 
-class Graph(object):
+class SolverRequirement(object):
+    """A :class:`Solver` requirement.
+
+    :param str name: Name of the required package.
+
+    It merges requirements from multiple :class:`Node` objects.
+    This object is used to find the best satisfying package.
+    """
+    def __init__(self, name):
+        #: Package name
+        self.name = name
+        #: Merged :class:`Requirement`
+        self.merged = Requirement(name)
+        #: Dictionary of requesting :class:`Node`: node :class:`Requirement`
+        self.requesters = {}
+        #: ``set`` of satisfying :class:`Node` objects
+        self.satisfiers = set()
+
+    def merge(self, requirement, requester):
+        """Merge with another requirement.
+
+        :param requirement: requirement to merge with.
+        :type requirement: ``str`` or :class:`Requirement`
+        :param requester: requesting node
+        :type requester: :class:`Node`
+        """
+        # Merge the requirement
+        self.merged += requirement
+        # Keep track of the requester and its original requirement
+        self.requesters[requester] = requirement
+        # remove satisfiers who no longer satisfy the merged
+        # requirement
+        satisfiers = []
+        for satisfier in self.satisfiers:
+            if self.merged.satisfied_by(satisfier.obj):
+                satisfiers.append(satisfier)
+        self.satisfiers = set(satisfiers)
+
+    def satisfy(self, node):
+        """Try to satisfy the requirement with a :class:`Node`.
+
+        :rtype: Count of satisfied nodes.
+        """
+        satisfied = 0
+
+        if self.merged.satisfied_by(node.obj):
+            self.satisfiers.add(node)
+            for requester, requester_req in self.requesters.items():
+                requester.requirements[requester_req].add(node)
+                node.dependents.append(requester)
+                satisfied += 1
+
+        return satisfied
+
+
+class Solver(object):
     """The ipkg dependency solver.
     """
     def __init__(self):
-        self.nodes = []  # list of nodes
-        self.requirements = {}  # requirement name: dict
-        self.objects = {}  # object: node
+        #: List of :class:`Node`
+        self.nodes = []
+        #: Dictionary of :class:`SolverRequirement`
+        self.requirements = {}
+        #: Dictionary using ``object`` as key and :class:`Node` as value
+        self.objects = {}
 
     def add(self, obj, skip_dependencies=False):
-        """Add a node to the graph.
+        """Add a node to the solver.
 
-        ``obj`` can be a ``Formula`` or a ``Package`` object.
+        :type obj: :py:class:`~ipkg.packages.PackageFile`, \
+        :py:class:`~ipkg.packages.MetaPackage` or \
+        :py:class:`~ipkg.build.Formula`
+        :param boolean skip_dependencies: Ignore object's requirements if \
+        ``True``.
 
-        If ``skip_dependencies`` is true,
-        objects dependencies are ignored.
-
-        When adding a node to the graph,
-        we try to match the new node to the unsatisfied requirements of
-        the nodes already in the graph.
+        When adding a node to the solver,
+        it tries to match the new node to the unsatisfied
+        requirements of the nodes already in the solver.
         """
         #LOGGER.debug('add %s', obj)
         if obj in self.objects:
-            raise IpkgException('WTF: obj already in graph')
+            raise IpkgException('WTF: obj already in solver')
 
         new_node = Node(obj, skip_dependencies=skip_dependencies)
 
-        #LOGGER.debug('inspecting new node requirements')
+        # Merge the new node requirements to their corresponding
+        # SolverRequirement objects
         for new_node_req in new_node.requirements:
-            #LOGGER.debug('new_node_req %s', new_node_req)
-            if new_node_req.name in self.requirements:
-                cur_req = self.requirements[new_node_req.name]['requirement']
-                new_req = cur_req + new_node_req
-                req_d = self.requirements[new_node_req.name]
-                req_d['requirement'] = new_req
-                req_d['requesters'][new_node] = new_node_req
-                # remove satisfiers who no longer satisfy the merged
-                # requirement
-                satisfiers = []
-                for satisfier in req_d['satisfiers']:
-                    if new_req.satisfied_by(satisfier.obj):
-                        satisfiers.append(satisfier)
-                req_d['satisfiers'] = set(satisfiers)
-            else:
-                #LOGGER.debug('has not %s', new_node_req.name)
-                self.requirements[new_node_req.name] = {
-                    'requirement': new_node_req,
-                    'requesters': {new_node: new_node_req},
-                    'satisfiers': set(),
-                }
+            req_name = new_node_req.name
+            if req_name not in self.requirements:
+                self.requirements[req_name] = SolverRequirement(req_name)
+            self.requirements[req_name].merge(new_node_req, new_node)
 
         # Try to satisfy other node requirements with this node
         if new_node.obj.name in self.requirements:
-            req_d = self.requirements[new_node.obj.name]
-            if req_d['requirement'].satisfied_by(new_node.obj):
-                req_d['satisfiers'].add(new_node)
-                LOGGER.debug('req_d %r', req_d)
-                for requester, requester_req in req_d['requesters'].items():
-                    requester.requirements[requester_req].add(new_node)
-                    new_node.dependents.append(requester)
-                    LOGGER.debug('%s requirement %s satisfied by %s',
-                                 requester, requester_req, new_node)
+            self.requirements[new_node.obj.name].satisfy(new_node)
 
         self.nodes.append(new_node)
         self.objects[obj] = new_node
@@ -134,20 +182,20 @@ class Graph(object):
 
     @property
     def unsatisfied(self):
-        """Returns a list of unsatisfied ``Requirements``.
+        """Returns a list of unsatisfied :class:`SolverRequirements`.
         """
-        return [d['requirement'] for d in self.requirements.values()
-                if not d['satisfiers']]
+        return [sr.merged for sr in self.requirements.values()
+                if not sr.satisfiers]
 
     @classmethod
     def from_obj(cls, obj, environment=None, repositories=None):
-        """Create a dependency graph from an ``obj``, which can be a
+        """Create a dependency solver from an ``obj``, which can be a
            ``Formula`` of a ``Package``.
 
         If an ``environment`` is given, it must be an
         ``ipkg.environments.Environent`` instance.
         All requirements satisfied by packages installed inside it are
-        ignored (they are not added to the graph).
+        ignored (they are not added to the solver).
 
         if ``repositories`` is given, it must be an iterable of
         ``ipkg.repositories.FormulaRepository`` or
@@ -155,8 +203,8 @@ class Graph(object):
         They can be mixed.
         """
 
-        graph = cls()
-        node = graph.add(obj)
+        solver = cls()
+        node = solver.add(obj)
         queue = set()
 
         for requirement in node.requirements:
@@ -166,14 +214,14 @@ class Graph(object):
             requiring_node, requirement = queue.pop()
             LOGGER.debug('Current: %r %r', requiring_node, requirement)
 
-            if requirement.name in graph.requirements:
-                LOGGER.debug('Requirement %s exists in graph: satisfiers=%r',
+            if requirement.name in solver.requirements:
+                LOGGER.debug('Requirement %s exists in solver: satisfiers=%r',
                              requirement.name,
-                             graph.requirements[requirement.name]['satisfiers'])
-                if graph.requirements[requirement.name]['satisfiers']:
-                    LOGGER.debug('Satisfied requirement %s satisfied in graph',
+                             solver.requirements[requirement.name].satisfiers)
+                if solver.requirements[requirement.name].satisfiers:
+                    LOGGER.debug('Satisfied requirement %s satisfied in solver',
                                  requirement)
-                    requirement_node_set = graph.requirements[requirement.name]['satisfiers'].copy()
+                    requirement_node_set = solver.requirements[requirement.name].satisfiers.copy()
                     requiring_node.requirements[requirement] = requirement_node_set
                     for requirement_node in requirement_node_set:
                         requirement_node.dependents.append(requiring_node)
@@ -181,7 +229,7 @@ class Graph(object):
 #                else:
 #                    LOGGER.debug('Requirement %s not satisfied by %r',
 #                                 requirement,
-#                                 graph.requirements[requirement.name])
+#                                 solver.requirements[requirement.name])
 
             if environment:
                 found = False
@@ -189,7 +237,7 @@ class Graph(object):
                     if requirement.satisfied_by(package):
                         LOGGER.debug('Satisfied by environment package %s',
                                      package)
-                        graph.add(package)
+                        solver.add(package)
                         found = True
                         break
                 if found is True:
@@ -201,11 +249,11 @@ class Graph(object):
                 for satisfier in satisfiers:
                     LOGGER.debug('Satisfied by %s found in %s',
                                  satisfiers, repository)
-                    new_node = graph.add(satisfier)
+                    new_node = solver.add(satisfier)
                     for satisfier_req in new_node.requirements:
                         queue.add((new_node, satisfier_req))
 
-        return graph
+        return solver
 
     def __from_target(self, target):
         if isinstance(target, Node):
@@ -226,26 +274,26 @@ class Graph(object):
         dependencies = {}
 
         for t_req in target.requirements:
-            req_d = self.requirements[t_req.name]
-            req_queue.append((target, req_d['requirement']))
+            req_queue.append((target, self.requirements[t_req.name].merged))
 
         while req_queue:
-            cur_req_owner, cur_req = req_queue.pop(0)
+            cr_owner, cur_req = req_queue.pop(0)
+            cr_name = cur_req.name
 
-            if cur_req.name in dependencies:
+            if cr_name in dependencies:
                 continue
 
-            if cur_req.name not in self.requirements:
+            if cr_name not in self.requirements:
                 raise IpkgException('Requirement not found: %s, asked by %s' %
-                                    (cur_req, cur_req_owner))
+                                    (cur_req, cr_owner))
 
-            req_d = self.requirements[cur_req.name]
+            solver_req = self.requirements[cr_name]
 
-            if not req_d['satisfiers']:
+            if not solver_req.satisfiers:
                 raise IpkgException('No satisfier found for requirement %s, '
-                                    'asked by %s' % (cur_req, cur_req_owner))
+                                    'asked by %s' % (cur_req, cr_owner))
 
-            satisfier = dependency_selector(req_d['satisfiers'])
+            satisfier = dependency_selector(solver_req.satisfiers)
 
             for satisfier_req in self.objects[satisfier].requirements:
                 req_queue.append((satisfier, satisfier_req))
@@ -299,7 +347,7 @@ class Graph(object):
             sorted_nodes.append(node)
 
             for requirement in node.requirements:
-                node_set = self.requirements[requirement.name]['satisfiers']
+                node_set = self.requirements[requirement.name].satisfiers
                 LOGGER.debug(' Available nodes for requirement %s: %s',
                              requirement, node_set)
 
